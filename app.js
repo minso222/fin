@@ -541,6 +541,7 @@ const state = {
   flashOrder: [],
   flashBack: false,
   formulaOpen: {},
+  quizFormulaOpen: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -574,6 +575,7 @@ function loadState() {
     state.flashOrder = flashcards.map((_, i) => i);
   }
   if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
+  state.quizFormulaOpen = !!state.quizFormulaOpen;
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
@@ -589,7 +591,8 @@ function saveState() {
     timer: state.timer,
     flashIndex: state.flashIndex,
     flashOrder: state.flashOrder,
-    formulaOpen: state.formulaOpen
+    formulaOpen: state.formulaOpen,
+    quizFormulaOpen: state.quizFormulaOpen
   }));
 }
 
@@ -767,6 +770,33 @@ function openFormulaFor(id) {
   setTimeout(() => document.getElementById(`formula-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
 }
 
+function renderQuizFormulaSheet() {
+  return `
+    <aside class="quiz-formula-sheet" aria-label="Original formula sheet">
+      <div class="quiz-formula-head">
+        <h3>Formula Sheet</h3>
+        <span class="badge">Original docx</span>
+      </div>
+      <div class="quiz-formula-scroll">
+        ${formulasByChapter().map(([chapter, items]) => `
+          <section class="quiz-formula-chapter">
+            <h4>${chapter}</h4>
+            ${items.map(f => `
+              <article class="quiz-formula-item">
+                <h5>${f.title}</h5>
+                <div class="formula compact">\\(${f.tex}\\)</div>
+              </article>`).join("")}
+          </section>`).join("")}
+      </div>
+    </aside>`;
+}
+
+function toggleQuizFormulaSheet() {
+  state.quizFormulaOpen = !state.quizFormulaOpen;
+  saveState();
+  render();
+}
+
 function renderQuiz(kind) {
   const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
@@ -778,6 +808,7 @@ function renderQuiz(kind) {
   const solved = run.solved[q.id] === true;
   const wrongPicks = run.wrong[q.id] || [];
   const correctCount = questions.filter(item => run.solved[item.id]).length;
+  const formulaOpen = !!state.quizFormulaOpen;
   const filterRow = kind === "sample" ? `
     <div class="filter-row">
       <label class="filter-label" for="chapterFilter">Focus</label>
@@ -796,26 +827,34 @@ function renderQuiz(kind) {
         <span class="badge">${kind === "sample" ? "Original Sample Final" : "Generated Practice"} · Question ${run.index + 1} of ${questions.length}</span>
         <span>Score ${correctCount}/${questions.length} · Attempts on this question ${attempts}</span>
       </div>
-      <article class="question-panel" aria-labelledby="questionHeading">
-        <h2 id="questionHeading" class="visually-hidden">Question ${run.index + 1}</h2>
-        <div class="question-meta"><span>${q.source}</span><span>${q.type}</span></div>
-        <p class="question-text" id="qtext-${q.id}">${q.prompt}</p>
-        <div class="choices" role="group" aria-label="Answer choices for this question" aria-labelledby="qtext-${q.id}">
-          ${q.choices.map((choice, i) => {
-            const letter = String.fromCharCode(97 + i);
-            const isCorrect = solved && i === q.answer;
-            const isWrong = !solved && wrongPicks.includes(i);
-            const cls = ["choice", isCorrect ? "correct" : "", isWrong ? "wrong" : ""].filter(Boolean).join(" ");
-            return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
-          }).join("")}
-        </div>
-        ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
-      </article>
       <div class="action-row">
-        <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
-        <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
-        <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
-        ${kind === "generated" ? `<button type="button" class="secondary" onclick="startGenerated()">Generate new set</button>` : ""}
+        <button type="button" class="secondary" onclick="toggleQuizFormulaSheet()" aria-expanded="${formulaOpen}">${formulaOpen ? "Close Formula Sheet" : "Open Formula Sheet"}</button>
+      </div>
+      <div class="quiz-workspace ${formulaOpen ? "with-formulas" : ""}">
+        <div class="quiz-main">
+          <article class="question-panel" aria-labelledby="questionHeading">
+            <h2 id="questionHeading" class="visually-hidden">Question ${run.index + 1}</h2>
+            <div class="question-meta"><span>${q.source}</span><span>${q.type}</span></div>
+            <p class="question-text" id="qtext-${q.id}">${q.prompt}</p>
+            <div class="choices" role="group" aria-label="Answer choices for this question" aria-labelledby="qtext-${q.id}">
+              ${q.choices.map((choice, i) => {
+                const letter = String.fromCharCode(97 + i);
+                const isCorrect = solved && i === q.answer;
+                const isWrong = !solved && wrongPicks.includes(i);
+                const cls = ["choice", isCorrect ? "correct" : "", isWrong ? "wrong" : ""].filter(Boolean).join(" ");
+                return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
+              }).join("")}
+            </div>
+            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
+          </article>
+          <div class="action-row">
+            <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
+            <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
+            <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
+            ${kind === "generated" ? `<button type="button" class="secondary" onclick="startGenerated()">Generate new set</button>` : ""}
+          </div>
+        </div>
+        ${formulaOpen ? renderQuizFormulaSheet() : ""}
       </div>
     </section>`;
 }
