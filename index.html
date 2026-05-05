@@ -21,14 +21,20 @@
   <body>
     <a class="skip-link" href="#app">Skip to content</a>
     <header class="topbar">
-      <div>
-        <p class="eyebrow">FIN 295</p>
-        <h1>Final Study Studio</h1>
-      </div>
+      <button id="logoButton" class="site-logo" type="button" aria-label="Go to home page"><span>FIN</span><span>295</span></button>
       <div class="topbar-actions">
-        <button id="themeToggle" class="icon-button" type="button" aria-label="Toggle dark mode">D</button>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="Toggle dark mode"><span data-theme-icon></span></button>
         <a class="topbar-contact" href="https://www.linkedin.com/in/minsot13" target="_blank" rel="noopener noreferrer">Get in Touch</a>
+        <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
       </div>
+      <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation" hidden>
+        <button type="button" data-route="sample" class="mobile-nav-link">Sample Test</button>
+        <button type="button" data-route="generate" class="mobile-nav-link">Practice Tests</button>
+        <button type="button" data-route="formulas" class="mobile-nav-link">Formula Sheet</button>
+        <button type="button" data-route="tools" class="mobile-nav-link">Study Tools</button>
+        <button id="mobileThemeToggle" type="button" class="mobile-menu-action"><span data-theme-icon></span><span data-theme-label></span></button>
+        <a class="mobile-menu-action" href="https://www.linkedin.com/in/minsot13" target="_blank" rel="noopener noreferrer">Get in Touch</a>
+      </nav>
     </header>
     <div class="layout">
       <nav class="sidebar" aria-label="Main navigation">

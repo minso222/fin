@@ -544,6 +544,7 @@ const state = {
   formulaOpen: {},
   quizFormulaOpen: false,
   contactRevealed: {},
+  mobileMenuOpen: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -579,6 +580,7 @@ function loadState() {
   if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
   state.quizFormulaOpen = !!state.quizFormulaOpen;
   if (!state.contactRevealed || typeof state.contactRevealed !== "object") state.contactRevealed = {};
+  state.mobileMenuOpen = false;
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
@@ -610,7 +612,7 @@ const formatText = s => escHtml(s)
   .replace(/\b([A-Za-z]+)_([A-Za-z0-9]+)\b/g, (_, base, sub) => `${base}<sub>${sub}</sub>`);
 
 const contactLinks = {
-  email: { label: "School Email", text: "m.tumbahangphe@my.ccsu.edu", href: "mailto:m.tumbahangphe@my.ccsu.edu", icon: "@" },
+  email: { label: "School Email", text: "m.tumbahangphe@my.ccsu.edu", icon: "@" },
   linkedin: { label: "LinkedIn", text: "linkedin.com/in/minsot13", href: "https://www.linkedin.com/in/minsot13", icon: "in" },
   github: { label: "GitHub", text: "github.com/minso222", href: "https://github.com/minso222", icon: "gh" }
 };
@@ -731,7 +733,9 @@ function startChapterPractice(chapterLabel) {
 
 function routeTo(route) {
   state.route = route;
+  state.mobileMenuOpen = false;
   syncNavigation();
+  syncMobileMenu();
   saveState();
   render();
 }
@@ -746,6 +750,42 @@ function syncNavigation() {
     if (active) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
+}
+
+function setTheme(dark) {
+  state.dark = !!dark;
+  document.body.classList.toggle("dark", state.dark);
+  document.querySelectorAll("[data-theme-icon]").forEach(node => {
+    node.textContent = state.dark ? "☾" : "☀";
+  });
+  document.querySelectorAll("[data-theme-label]").forEach(node => {
+    node.textContent = state.dark ? "Light Mode" : "Dark Mode";
+  });
+  document.querySelectorAll("#themeToggle, #mobileThemeToggle").forEach(node => {
+    node.setAttribute("aria-pressed", state.dark ? "true" : "false");
+    if (node.id === "themeToggle") node.setAttribute("aria-label", state.dark ? "Switch to light mode" : "Switch to dark mode");
+  });
+  saveState();
+}
+
+function toggleTheme() {
+  setTheme(!state.dark);
+}
+
+function syncMobileMenu() {
+  const menu = document.getElementById("mobileMenu");
+  const toggle = document.getElementById("mobileMenuToggle");
+  if (menu) menu.hidden = !state.mobileMenuOpen;
+  if (toggle) {
+    toggle.classList.toggle("open", state.mobileMenuOpen);
+    toggle.setAttribute("aria-expanded", state.mobileMenuOpen ? "true" : "false");
+    toggle.setAttribute("aria-label", state.mobileMenuOpen ? "Close menu" : "Open menu");
+  }
+}
+
+function toggleMobileMenu() {
+  state.mobileMenuOpen = !state.mobileMenuOpen;
+  syncMobileMenu();
 }
 
 function formulaLinks(ids) {
@@ -1051,10 +1091,13 @@ function renderTools() {
 function renderContactSection() {
   const renderContactAction = key => {
     const item = contactLinks[key];
-    if (state.contactRevealed[key]) {
-      return `<a class="contact-action revealed" href="${item.href}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">${item.icon}</span>${item.text}</a>`;
+    if (key === "email") {
+      if (state.contactRevealed.email) {
+        return `<div class="contact-action revealed copyable" tabindex="0"><span class="contact-icon">${item.icon}</span><span>${item.text}</span></div>`;
+      }
+      return `<button type="button" class="contact-action" onclick="revealContact('email')"><span class="contact-icon">${item.icon}</span>${item.label}</button>`;
     }
-    return `<button type="button" class="contact-action" onclick="revealContact('${key}')"><span class="contact-icon">${item.icon}</span>${item.label}</button>`;
+    return `<a class="contact-action" href="${item.href}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">${item.icon}</span>${item.label}</a>`;
   };
   return `
     <section class="contact-section" aria-labelledby="contactHeading">
@@ -1075,7 +1118,6 @@ function revealContact(key) {
   state.contactRevealed[key] = true;
   saveState();
   render();
-  window.open(item.href, "_blank", "noopener,noreferrer");
 }
 
 function render() {
@@ -1423,17 +1465,16 @@ function shuffleFlashcards() {
 document.addEventListener("DOMContentLoaded", () => {
   loadState();
   const themeToggle = document.getElementById("themeToggle");
-  themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
-  themeToggle.textContent = state.dark ? "L" : "D";
+  const mobileThemeToggle = document.getElementById("mobileThemeToggle");
+  document.getElementById("logoButton")?.addEventListener("click", () => routeTo("home"));
   document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
-  themeToggle.addEventListener("click", () => {
-    state.dark = !state.dark;
-    document.body.classList.toggle("dark", state.dark);
-    themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
-    themeToggle.textContent = state.dark ? "L" : "D";
-    saveState();
-  });
+  document.querySelectorAll(".mobile-nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
+  themeToggle?.addEventListener("click", toggleTheme);
+  mobileThemeToggle?.addEventListener("click", toggleTheme);
+  document.getElementById("mobileMenuToggle")?.addEventListener("click", toggleMobileMenu);
+  setTheme(state.dark);
   syncNavigation();
+  syncMobileMenu();
   window.addEventListener("resize", () => renderFloatingTimer());
   render();
 });
