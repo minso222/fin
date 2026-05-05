@@ -732,6 +732,9 @@ function startChapterPractice(chapterLabel) {
 }
 
 function routeTo(route) {
+  if (document.activeElement?.closest?.(".sidebar, .mobile-menu")) {
+    document.activeElement.blur();
+  }
   state.route = route;
   state.mobileMenuOpen = false;
   syncNavigation();
