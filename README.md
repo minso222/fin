@@ -17,6 +17,17 @@ The project is a **static site** (no server). Push the repo to GitHub, then:
 
 Do not embed secret API keys; generated exams are assembled in the browser from local question data.
 
+## Auto commit and push (Cursor)
+
+This repo includes a **Cursor project hook** that runs when an **agent stops** ([`.cursor/hooks.json`](.cursor/hooks.json)):
+
+- If there are uncommitted changes, it runs `git add -A`, `git commit` with an automatic timestamp message, and `git push`.
+- If there is nothing to commit, or `git`/`push` fails, it exits quietly so your workflow is not blocked.
+
+Requirements: **Node.js** on your `PATH` (the script is `node .cursor/hooks/auto-git-sync.js`), and a configured **`git push`** for this repo (credentials or SSH).
+
+To turn it off, remove the `stop` entry from `.cursor/hooks.json` or delete that file. You may need to restart Cursor after changing hooks.
+
 ## Stack Rationale
 
 This is a dependency-free static web app (HTML, CSS, vanilla JavaScript) instead of React + Vite + Tailwind so it runs anywhere with zero install: open one file locally or deploy the folder as-is. MathJax provides formula rendering comparable to KaTeX for this use case. State such as dark mode, quiz progress, wrong-answer markers, chapter filter, generated tests, timer settings, and flashcard position is persisted in `localStorage`.

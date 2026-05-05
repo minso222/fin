@@ -1,0 +1,13 @@
+---
+description: Commit and push to GitHub after completing work in this repo
+alwaysApply: true
+---
+
+# Git sync after changes
+
+When you finish a task that modifies files in this repository, push to GitHub:
+
+1. Run `git status`.
+2. If there are unstaged or uncommitted changes: `git add -A`, then `git commit -m "<short descriptive message>"`, then `git push`.
+
+A Cursor **stop** hook may also run `git add` / `commit` / `push` when an agent run ends. If you already committed and pushed, the hook will typically see a clean tree and do nothing. Prefer clear commit messages when you run git yourself (the hook uses a generic timestamp message).
