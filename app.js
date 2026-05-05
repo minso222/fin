@@ -39,6 +39,292 @@ const alarmSounds = [
 
 const formulas = [
   {
+    id: "nwc",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Net Working Capital",
+    tex: "NWC = Current\\ Assets - Current\\ Liabilities",
+    plain: "Measures the current assets left after covering current liabilities.",
+    variables: "Current Assets = short-term assets; Current Liabilities = short-term liabilities.",
+    when: "Use for liquidity and working-capital review.",
+    example: "If current assets are $5,000 and current liabilities are $3,200, NWC = $1,800."
+  },
+  {
+    id: "nowc-basic",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Net Operating Working Capital",
+    tex: "NOWC = Operating\\ Current\\ Assets - Operating\\ Current\\ Liabilities",
+    plain: "Measures working capital tied directly to operations.",
+    variables: "Operating current assets exclude excess cash; operating current liabilities exclude notes payable.",
+    when: "Use when the question focuses on operating assets and liabilities.",
+    example: "NOWC rises when operating current assets grow faster than operating current liabilities."
+  },
+  {
+    id: "nowc-adjusted",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Adjusted NOWC",
+    tex: "NOWC = (Current\\ Assets - Excess\\ Cash) - (Current\\ Liabilities - Notes\\ Payable)",
+    plain: "Computes operating working capital after removing financing and excess cash items.",
+    variables: "Excess Cash = cash not needed for operations; Notes Payable = financing liability.",
+    when: "Use when the balance sheet gives excess cash or notes payable.",
+    example: "Subtract excess cash from current assets and notes payable from current liabilities before finding NOWC."
+  },
+  {
+    id: "fcf",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Free Cash Flow",
+    tex: "FCF = [EBIT(1-T)+Depreciation\\ and\\ amortization] - [Capital\\ expenditures + NOWC]",
+    plain: "Estimates cash flow available after operating taxes, reinvestment, and working capital needs.",
+    variables: "EBIT = operating income; T = tax rate; NOWC = net operating working capital.",
+    when: "Use for corporate cash-flow and valuation review.",
+    example: "Start with after-tax EBIT, add depreciation, then subtract capital expenditures and NOWC."
+  },
+  {
+    id: "mva",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Market Value Added",
+    tex: "MVA = (P_0 \\times Number\\ of\\ shares) - Book\\ value",
+    plain: "Compares the market value of equity to its book value.",
+    variables: "P_0 = stock price today; Book value = accounting equity value.",
+    when: "Use to measure value created above book capital.",
+    example: "If market equity is $12 million and book value is $8 million, MVA = $4 million."
+  },
+  {
+    id: "eva",
+    chapter: "Chapter 3",
+    source: "Original formula sheet",
+    title: "Economic Value Added",
+    tex: "EVA = EBIT(1-T) - (Total\\ invested\\ capital \\times Cost\\ of\\ capital)",
+    plain: "Measures operating profit after charging for the cost of invested capital.",
+    variables: "Total invested capital = capital supplied to operations; Cost of capital = required return.",
+    when: "Use to decide whether operations earned more than the required capital charge.",
+    example: "Positive EVA means operating profit exceeded the dollar cost of capital."
+  },
+  {
+    id: "current-ratio",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Current Ratio",
+    tex: "Current\\ ratio = \\frac{Current\\ assets}{Current\\ liabilities}",
+    plain: "Measures short-term liquidity.",
+    variables: "Current assets = short-term assets; Current liabilities = short-term obligations.",
+    when: "Use for liquidity ratio questions.",
+    example: "$10,000 / $5,000 = 2.00."
+  },
+  {
+    id: "quick-ratio",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Quick Ratio",
+    tex: "Quick\\ ratio = \\frac{Current\\ assets - Inventories}{Current\\ liabilities}",
+    plain: "Measures liquidity after removing inventory.",
+    variables: "Inventories = inventory balance; current liabilities = short-term obligations.",
+    when: "Use when the question asks for acid-test liquidity.",
+    example: "($10,000 - $2,500) / $5,000 = 1.50."
+  },
+  {
+    id: "cash-ratio",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Cash Ratio",
+    tex: "Cash\\ ratio = \\frac{Cash}{Current\\ liabilities}",
+    plain: "Measures the most conservative short-term liquidity position.",
+    variables: "Cash = cash and cash equivalents; Current liabilities = short-term obligations.",
+    when: "Use for strict cash-coverage questions.",
+    example: "$2,000 / $5,000 = 0.40."
+  },
+  {
+    id: "inventory-turnover",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Inventory Turnover",
+    tex: "Inventory\\ turnover = \\frac{COGS}{Inventories}",
+    plain: "Shows how many times inventory is sold and replaced during the period.",
+    variables: "COGS = cost of goods sold; Inventories = inventory balance.",
+    when: "Use for asset management efficiency questions.",
+    example: "$60,000 / $10,000 = 6.00 times."
+  },
+  {
+    id: "dso",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Days Sales Outstanding",
+    tex: "DSO = \\frac{Receivables}{Average\\ sales\\ per\\ day}",
+    plain: "Estimates the average collection period for receivables.",
+    variables: "Average sales per day = annual sales divided by 365.",
+    when: "Use for receivables collection questions.",
+    example: "$8,000 / $400 = 20 days."
+  },
+  {
+    id: "fa-turnover",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Fixed Assets Turnover",
+    tex: "FA\\ turnover = \\frac{Sales}{Net\\ fixed\\ assets}",
+    plain: "Measures sales generated per dollar of net fixed assets.",
+    variables: "Sales = annual sales; Net fixed assets = net property, plant, and equipment.",
+    when: "Use for fixed-asset efficiency questions.",
+    example: "$100,000 / $50,000 = 2.00."
+  },
+  {
+    id: "debt-capital",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Debt-to-Capital Ratio",
+    tex: "Debt\\mbox{-}to\\mbox{-}capital = \\frac{Total\\ debt}{Total\\ invested\\ capital}",
+    plain: "Measures how much invested capital is financed with debt.",
+    variables: "Total invested capital = debt plus equity capital used by the firm.",
+    when: "Use for financial leverage questions.",
+    example: "$40,000 / $100,000 = 40.00%."
+  },
+  {
+    id: "operating-margin",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Operating Margin",
+    tex: "Operating\\ Margin = \\frac{EBIT}{Sales}",
+    plain: "Measures operating income as a percentage of sales.",
+    variables: "EBIT = earnings before interest and taxes; Sales = revenue.",
+    when: "Use for operating profitability questions.",
+    example: "$12,000 / $100,000 = 12.00%."
+  },
+  {
+    id: "profit-margin",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Profit Margin",
+    tex: "Profit\\ Margin = \\frac{Net\\ Income}{Sales}",
+    plain: "Measures net income earned per dollar of sales.",
+    variables: "Net Income = earnings after all expenses; Sales = revenue.",
+    when: "Use for overall profitability questions.",
+    example: "$8,000 / $100,000 = 8.00%."
+  },
+  {
+    id: "bep",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Basic Earning Power",
+    tex: "BEP = \\frac{EBIT}{Total\\ Assets}",
+    plain: "Measures operating return on total assets before interest and taxes.",
+    variables: "EBIT = operating income; Total Assets = asset base.",
+    when: "Use to compare operating profitability independent of financing.",
+    example: "$15,000 / $120,000 = 12.50%."
+  },
+  {
+    id: "roa",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Return on Assets",
+    tex: "ROA = \\frac{Net\\ Income}{Total\\ Assets}",
+    plain: "Measures net income earned per dollar of assets.",
+    variables: "Net Income = earnings after all expenses; Total Assets = asset base.",
+    when: "Use for profitability relative to assets.",
+    example: "$9,000 / $150,000 = 6.00%."
+  },
+  {
+    id: "roe-basic",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Return on Equity",
+    tex: "ROE = \\frac{Net\\ Income}{Total\\ Equity}",
+    plain: "Measures net income earned per dollar of equity.",
+    variables: "Total Equity = shareholders' equity.",
+    when: "Use for profitability relative to equity.",
+    example: "$9,000 / $75,000 = 12.00%."
+  },
+  {
+    id: "pe",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Price/Earnings Ratio",
+    tex: "P/E = \\frac{Price}{Earnings\\ per\\ share}",
+    plain: "Shows how much investors pay for each dollar of earnings.",
+    variables: "Price = market price per share; Earnings per share = EPS.",
+    when: "Use for market value ratio questions.",
+    example: "$40 / $4 = 10.00."
+  },
+  {
+    id: "mb",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Market/Book Ratio",
+    tex: "M/B = \\frac{Market\\ price}{Book\\ value\\ per\\ share}",
+    plain: "Compares market price per share to accounting book value per share.",
+    variables: "Book value per share = common equity divided by shares outstanding.",
+    when: "Use for market value ratio questions.",
+    example: "$30 / $15 = 2.00."
+  },
+  {
+    id: "enterprise-value",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "Enterprise Value",
+    tex: "Enterprise\\ Value = MVE + MVD + MVClaims - Cash\\ and\\ equivalents",
+    plain: "Measures the market value of the firm's operating claims net of cash.",
+    variables: "MVE = market value of equity; MVD = market value of debt; MVClaims = market value of other claims.",
+    when: "Use for valuation and capital-structure questions.",
+    example: "Add market equity, market debt, and other claims, then subtract cash."
+  },
+  {
+    id: "dupont-roe",
+    chapter: "Chapter 4",
+    source: "Original formula sheet",
+    title: "DuPont ROE",
+    tex: "ROE = \\frac{NI}{Sales} \\times \\frac{Sales}{TA} \\times \\frac{TA}{Equity}",
+    plain: "Breaks ROE into profit margin, total assets turnover, and equity multiplier.",
+    variables: "NI = net income; TA = total assets; Equity = total equity.",
+    when: "Use to analyze what drives return on equity.",
+    example: "ROE improves when margins, turnover, or leverage rise."
+  },
+  {
+    id: "pv",
+    chapter: "Chapter 5",
+    source: "Original formula sheet",
+    title: "Present Value",
+    tex: "PV = \\frac{FV_N}{(1+I)^N}",
+    plain: "Discounts a future lump sum back to today.",
+    variables: "FV_N = future value in period N; I = interest rate per period; N = number of periods.",
+    when: "Use for lump-sum present value questions.",
+    example: "$1,000 / 1.10^3 = $751.31."
+  },
+  {
+    id: "eff",
+    chapter: "Chapter 5",
+    source: "Original formula sheet",
+    title: "Effective Annual Rate",
+    tex: "EFF\\% = \\left(1+\\frac{I_{NOM}}{M}\\right)^M - 1",
+    plain: "Converts a nominal rate with compounding into an effective annual rate.",
+    variables: "I_NOM = nominal annual rate; M = compounding periods per year.",
+    when: "Use when compounding occurs more than once per year.",
+    example: "(1 + 0.12/12)^12 - 1 = 12.68%."
+  },
+  {
+    id: "nominal-rate",
+    chapter: "Chapter 6",
+    source: "Original formula sheet",
+    title: "Nominal Interest Rate",
+    tex: "r = r^* + IP + DRP + LP + MRP",
+    plain: "Builds a quoted interest rate from the real risk-free rate and risk premiums.",
+    variables: "r* = real risk-free rate; IP = inflation premium; DRP = default risk premium; LP = liquidity premium; MRP = maturity risk premium.",
+    when: "Use for interest rate component questions.",
+    example: "Add each premium to the real risk-free rate to estimate the nominal rate."
+  },
+  {
+    id: "maturity-risk-premium",
+    chapter: "Chapter 6",
+    source: "Original formula sheet",
+    title: "Maturity Risk Premium",
+    tex: "MRP_t = 0.1\\%(t-1)",
+    plain: "Estimates the maturity risk premium based on years to maturity.",
+    variables: "t = years to maturity.",
+    when: "Use when the formula sheet gives the maturity risk premium rule.",
+    example: "For t = 6, MRP = 0.1%(5) = 0.50%."
+  },
+  {
     id: "npv",
     chapter: "Chapter 11",
     source: "Chapter 11 slides 7-12; sample final Q1",
@@ -117,7 +403,7 @@ const formulas = [
   },
   {
     id: "capm",
-    chapter: "Chapters 8 and 10",
+    chapter: "Chapter 10",
     source: "Chapter 8 slides 36-45; Chapter 10 slides 17-20; sample final Q15",
     title: "CAPM / SML",
     tex: "r_s = r_{RF} + (r_M-r_{RF})b",
@@ -161,7 +447,7 @@ const formulas = [
   },
   {
     id: "preferred",
-    chapter: "Chapters 9 and 10",
+    chapter: "Chapter 9",
     source: "Chapter 9_3 notes; Chapter 10 slides 13-16",
     title: "Preferred Stock Value / Cost",
     tex: "V_p = \\frac{D}{r_p},\\quad r_p = \\frac{D_p}{P_p}",
@@ -172,7 +458,7 @@ const formulas = [
   },
   {
     id: "tato",
-    chapter: "Chapter 4 / Sample Final review",
+    chapter: "Chapter 4",
     source: "Formula sheet; sample final Q17",
     title: "Total Assets Turnover",
     tex: "TATO = \\frac{Sales}{Total\\ Assets}",
@@ -183,7 +469,7 @@ const formulas = [
   },
   {
     id: "fv",
-    chapter: "Chapter 5 / Sample Final review",
+    chapter: "Chapter 5",
     source: "Formula sheet; sample final Q20",
     title: "Future Value",
     tex: "FV_N = PV(1+I)^N",
@@ -193,6 +479,8 @@ const formulas = [
     example: "$1,900(1.139)^{10} = $6,982.18."
   }
 ];
+
+const formulaChapterOrder = ["Chapter 3", "Chapter 4", "Chapter 5", "Chapter 6", "Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"];
 
 const sampleQuestions = [
   // Source: Chapter 11 slides 7-12; sample final Q1.
@@ -252,6 +540,7 @@ const state = {
   flashIndex: 0,
   flashOrder: [],
   flashBack: false,
+  formulaOpen: {},
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -284,6 +573,7 @@ function loadState() {
   if (!Array.isArray(state.flashOrder) || state.flashOrder.length !== flashcards.length) {
     state.flashOrder = flashcards.map((_, i) => i);
   }
+  if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
@@ -298,7 +588,8 @@ function saveState() {
     generatedRun: state.generatedRun,
     timer: state.timer,
     flashIndex: state.flashIndex,
-    flashOrder: state.flashOrder
+    flashOrder: state.flashOrder,
+    formulaOpen: state.formulaOpen
   }));
 }
 
@@ -448,8 +739,32 @@ function formulaLinks(ids) {
   if (!ids || !ids.length) return "";
   return `<p><strong>Formula link:</strong> ${ids.map(id => {
     const f = formulas.find(x => x.id === id);
-    return `<button type="button" class="small-button" onclick="routeTo('formulas'); setTimeout(()=>document.getElementById('formula-${id}')?.scrollIntoView({behavior:'smooth'}), 40)">${f?.title || id}</button>`;
+    return `<button type="button" class="small-button" onclick="routeTo('formulas'); setTimeout(()=>openFormulaFor('${id}'), 40)">${f?.title || id}</button>`;
   }).join(" ")}</p>`;
+}
+
+function formulasByChapter() {
+  const grouped = formulas.reduce((acc, formula) => {
+    if (!acc[formula.chapter]) acc[formula.chapter] = [];
+    acc[formula.chapter].push(formula);
+    return acc;
+  }, {});
+  return formulaChapterOrder.filter(ch => grouped[ch]).map(ch => [ch, grouped[ch]]);
+}
+
+function toggleFormulaChapter(chapter) {
+  state.formulaOpen[chapter] = !state.formulaOpen[chapter];
+  saveState();
+  render();
+}
+
+function openFormulaFor(id) {
+  const formula = formulas.find(f => f.id === id);
+  if (!formula) return;
+  state.formulaOpen[formula.chapter] = true;
+  saveState();
+  render();
+  setTimeout(() => document.getElementById(`formula-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
 }
 
 function renderQuiz(kind) {
@@ -570,24 +885,39 @@ function renderHome() {
 }
 
 function renderFormulas() {
+  const chapters = formulasByChapter();
   return `
     <section class="stack">
       <div>
         <h2 class="page-title">Formula Sheet</h2>
-        <p class="muted">Clean formulas, plain-English meanings, variables, use cases, and examples tied to your source materials.</p>
+        <p class="muted">All formulas from the original formula sheet, grouped by chapter. Click a chapter to open or close its formulas.</p>
       </div>
-      <div class="grid">
-        ${formulas.map(f => `
-          <article id="formula-${f.id}" class="formula-card">
-            <span class="badge">${f.chapter}</span>
-            <h3>${f.title}</h3>
-            <div class="formula">\\(${f.tex}\\)</div>
-            <p>${formatText(f.plain)}</p>
-            <p><strong>Variables:</strong> ${formatText(f.variables)}</p>
-            <p><strong>When to use:</strong> ${formatText(f.when)}</p>
-            <p><strong>Worked example:</strong> ${formatText(f.example)}</p>
-            <p class="muted">${f.source}</p>
-          </article>`).join("")}
+      <div class="formula-chapters">
+        ${chapters.map(([chapter, items]) => {
+          const isOpen = !!state.formulaOpen[chapter];
+          const panelId = `formula-panel-${chapter.replace(/[^A-Za-z0-9]/g, "-")}`;
+          return `
+            <section class="formula-chapter ${isOpen ? "open" : ""}">
+              <button type="button" class="formula-chapter-toggle" aria-expanded="${isOpen}" aria-controls="${panelId}" onclick="toggleFormulaChapter('${chapter}')">
+                <span>${chapter}</span>
+                <span class="badge">${items.length} formulas</span>
+              </button>
+              <div id="${panelId}" class="formula-chapter-panel" ${isOpen ? "" : "hidden"}>
+                <div class="grid">
+                  ${items.map(f => `
+                    <article id="formula-${f.id}" class="formula-card">
+                      <span class="badge">${f.source}</span>
+                      <h3>${f.title}</h3>
+                      <div class="formula">\\(${f.tex}\\)</div>
+                      <p>${formatText(f.plain)}</p>
+                      <p><strong>Variables:</strong> ${formatText(f.variables)}</p>
+                      <p><strong>When to use:</strong> ${formatText(f.when)}</p>
+                      <p><strong>Worked example:</strong> ${formatText(f.example)}</p>
+                    </article>`).join("")}
+                </div>
+              </div>
+            </section>`;
+        }).join("")}
       </div>
     </section>`;
 }
