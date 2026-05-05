@@ -689,7 +689,7 @@ body.dark .primary {
   border-radius: 12px;
   background: var(--panel);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: clip;
   min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -710,13 +710,21 @@ body.dark .primary {
   font-size: 1rem;
 }
 
+.quiz-formula-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 .quiz-formula-pdf {
   width: 100%;
   height: 100%;
   min-height: 420px;
   border: 0;
   background: var(--panel-solid);
-  overscroll-behavior: contain;
+  display: block;
 }
 
 .question-meta {
@@ -881,6 +889,7 @@ body.dark .primary {
   backdrop-filter: blur(12px);
   min-width: 0;
   overflow: hidden;
+  transform-origin: top;
 }
 
 .formula-card p,
@@ -928,6 +937,30 @@ body.dark .primary {
   text-align: left;
 }
 
+.formula-chapter-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.formula-chevron {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  color: var(--brand-2);
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.28s ease-out, background 0.28s ease-out;
+}
+
+.formula-chapter.open .formula-chevron {
+  transform: rotate(180deg);
+  background: rgba(107, 149, 255, 0.12);
+}
+
 .formula-chapter-toggle:hover {
   background: rgba(107, 149, 255, 0.1);
 }
@@ -938,11 +971,48 @@ body.dark .primary {
 }
 
 .formula-chapter-panel {
-  padding: 0 1rem 1rem;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: scaleY(0.985);
+  transform-origin: top;
+  transition:
+    grid-template-rows 320ms ease-out,
+    opacity 240ms ease-out,
+    transform 320ms ease-out;
 }
 
-.formula-chapter-panel[hidden] {
-  display: none;
+.formula-chapter.open .formula-chapter-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.formula-chapter-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 1rem;
+  transition: padding-bottom 320ms ease-out;
+}
+
+.formula-chapter.open .formula-chapter-inner {
+  padding-bottom: 1rem;
+}
+
+.formula-chapter-panel .formula-card {
+  opacity: 0;
+  transform: translateY(8px) scale(0.985);
+  animation: none;
+  transition:
+    opacity 220ms ease-out,
+    transform 280ms ease-out;
+  transition-delay: 0ms;
+}
+
+.formula-chapter.open .formula-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-delay: var(--stagger, 0ms);
 }
 
 .contact-section {
@@ -1332,10 +1402,20 @@ body.dark .contact-section {
     grid-template-columns: 1fr;
   }
   .quiz-formula-sheet {
-    max-height: 58vh;
+    max-height: 72vh;
+    overflow: visible;
+  }
+  .quiz-formula-scroll {
+    max-height: calc(72vh - 58px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
   .quiz-formula-pdf {
-    min-height: calc(58vh - 64px);
+    height: calc(72vh - 58px);
+    min-height: 460px;
   }
   .calc-grid {
     grid-template-columns: repeat(4, 1fr);

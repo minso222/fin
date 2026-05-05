@@ -830,7 +830,9 @@ function renderQuizFormulaSheet() {
         <h3>Formula Sheet</h3>
         <span class="badge">Original PDF</span>
       </div>
-      <iframe class="quiz-formula-pdf" title="FIN 295 Final Formula Sheet" src="${FORMULA_PDF}#toolbar=0&navpanes=0"></iframe>
+      <div class="quiz-formula-scroll">
+        <iframe class="quiz-formula-pdf" title="FIN 295 Final Formula Sheet" src="${FORMULA_PDF}#toolbar=0&navpanes=0"></iframe>
+      </div>
     </aside>`;
 }
 
@@ -982,20 +984,22 @@ function renderFormulas() {
             <section class="formula-chapter ${isOpen ? "open" : ""}">
               <button type="button" class="formula-chapter-toggle" aria-expanded="${isOpen}" aria-controls="${panelId}" onclick="toggleFormulaChapter('${chapter}')">
                 <span>${chapter}</span>
-                <span class="badge">${items.length} formulas</span>
+                <span class="formula-chapter-summary"><span class="badge">${items.length} formulas</span><span class="formula-chevron" aria-hidden="true">⌄</span></span>
               </button>
-              <div id="${panelId}" class="formula-chapter-panel" ${isOpen ? "" : "hidden"}>
-                <div class="grid">
-                  ${items.map(f => `
-                    <article id="formula-${f.id}" class="formula-card">
-                      <span class="badge">${f.source}</span>
-                      <h3>${f.title}</h3>
-                      <div class="formula">\\(${f.tex}\\)</div>
-                      <p>${formatText(f.plain)}</p>
-                      <p><strong>Variables:</strong> ${formatText(f.variables)}</p>
-                      <p><strong>When to use:</strong> ${formatText(f.when)}</p>
-                      <p><strong>Worked example:</strong> ${formatText(f.example)}</p>
-                    </article>`).join("")}
+              <div id="${panelId}" class="formula-chapter-panel" aria-hidden="${!isOpen}">
+                <div class="formula-chapter-inner">
+                  <div class="grid">
+                    ${items.map((f, index) => `
+                      <article id="formula-${f.id}" class="formula-card" style="--stagger:${index * 45}ms">
+                        <span class="badge">${f.source}</span>
+                        <h3>${f.title}</h3>
+                        <div class="formula">\\(${f.tex}\\)</div>
+                        <p>${formatText(f.plain)}</p>
+                        <p><strong>Variables:</strong> ${formatText(f.variables)}</p>
+                        <p><strong>When to use:</strong> ${formatText(f.when)}</p>
+                        <p><strong>Worked example:</strong> ${formatText(f.example)}</p>
+                      </article>`).join("")}
+                  </div>
                 </div>
               </div>
             </section>`;
