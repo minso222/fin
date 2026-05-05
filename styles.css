@@ -364,11 +364,11 @@ main {
   pointer-events: auto;
 }
 
-main > * {
+body.page-transition main > * {
   animation: fadeInUp 0.55s ease both;
 }
 
-main > *:nth-child(2) {
+body.page-transition main > *:nth-child(2) {
   animation-delay: 0.1s;
 }
 
@@ -393,31 +393,31 @@ main > *:nth-child(2) {
   padding: clamp(1rem, 2.4vw, 1.5rem);
 }
 
-.hero > *,
-.grid > *,
-.tools-grid > *,
-.question-panel,
-.filter-row,
-.formula-chapter,
-.formula-card,
-.contact-section,
-.quiz-formula-sheet {
+body.page-transition .hero > *,
+body.page-transition .grid > *,
+body.page-transition .tools-grid > *,
+body.page-transition .question-panel,
+body.page-transition .filter-row,
+body.page-transition .formula-chapter,
+body.page-transition .formula-card,
+body.page-transition .contact-section,
+body.page-transition .quiz-formula-sheet {
   animation: fadeInUp 0.55s ease both;
 }
 
-.hero > *:nth-child(2),
-.grid > *:nth-child(2),
-.tools-grid > *:nth-child(2) {
+body.page-transition .hero > *:nth-child(2),
+body.page-transition .grid > *:nth-child(2),
+body.page-transition .tools-grid > *:nth-child(2) {
   animation-delay: 0.08s;
 }
 
-.grid > *:nth-child(3),
-.tools-grid > *:nth-child(3) {
+body.page-transition .grid > *:nth-child(3),
+body.page-transition .tools-grid > *:nth-child(3) {
   animation-delay: 0.14s;
 }
 
-.grid > *:nth-child(4),
-.tools-grid > *:nth-child(4) {
+body.page-transition .grid > *:nth-child(4),
+body.page-transition .tools-grid > *:nth-child(4) {
   animation-delay: 0.2s;
 }
 
@@ -757,26 +757,29 @@ body.dark .primary {
   z-index: 1;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+body.page-transition .choice {
   animation: fadeInUp 0.4s ease both;
 }
 
-.choice:nth-child(1) {
+body.page-transition .choice:nth-child(1) {
   animation-delay: 0.03s;
 }
 
-.choice:nth-child(2) {
+body.page-transition .choice:nth-child(2) {
   animation-delay: 0.06s;
 }
 
-.choice:nth-child(3) {
+body.page-transition .choice:nth-child(3) {
   animation-delay: 0.09s;
 }
 
-.choice:nth-child(4) {
+body.page-transition .choice:nth-child(4) {
   animation-delay: 0.12s;
 }
 
-.choice:nth-child(5) {
+body.page-transition .choice:nth-child(5) {
   animation-delay: 0.15s;
 }
 .choice:focus-visible {
@@ -1067,14 +1070,17 @@ body.dark .contact-section {
   font-weight: 800;
   text-decoration: none;
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+body.page-transition .contact-action {
   animation: fadeInUp 0.45s ease both;
 }
 
-.contact-action:nth-child(2) {
+body.page-transition .contact-action:nth-child(2) {
   animation-delay: 0.08s;
 }
 
-.contact-action:nth-child(3) {
+body.page-transition .contact-action:nth-child(3) {
   animation-delay: 0.16s;
 }
 

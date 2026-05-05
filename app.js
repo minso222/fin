@@ -544,6 +544,7 @@ const state = {
   flashBack: false,
   formulaOpen: {},
   quizFormulaOpen: false,
+  formulaReturn: null,
   contactRevealed: {},
   mobileMenuOpen: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
@@ -557,6 +558,7 @@ let dragTimer = null;
 let alarmPreviewAudio = null;
 let alarmPreviewContext = null;
 let alarmPreviewPlaying = false;
+let animateNextRender = true;
 
 function loadState() {
   const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
@@ -784,6 +786,8 @@ function routeTo(route) {
   if (document.activeElement?.closest?.(".sidebar, .mobile-menu")) {
     document.activeElement.blur();
   }
+  animateNextRender = true;
+  if (route !== "formulas") state.formulaReturn = null;
   state.route = route;
   state.mobileMenuOpen = false;
   syncNavigation();
@@ -840,12 +844,24 @@ function toggleMobileMenu() {
   syncMobileMenu();
 }
 
-function formulaLinks(ids) {
+function formulaLinks(ids, returnKind = null) {
   if (!ids || !ids.length) return "";
   return `<p><strong>Formula link:</strong> ${ids.map(id => {
     const f = formulas.find(x => x.id === id);
-    return `<button type="button" class="small-button" onclick="routeTo('formulas'); setTimeout(()=>openFormulaFor('${id}'), 40)">${f?.title || id}</button>`;
+    return `<button type="button" class="small-button" onclick="goToFormulaFromQuiz('${id}', '${returnKind || ""}')">${f?.title || id}</button>`;
   }).join(" ")}</p>`;
+}
+
+function goToFormulaFromQuiz(id, returnKind) {
+  state.formulaReturn = returnKind || null;
+  routeTo("formulas");
+  setTimeout(() => openFormulaFor(id), 40);
+}
+
+function backToFormulaReturn() {
+  const target = state.formulaReturn || "sample";
+  state.formulaReturn = null;
+  routeTo(target);
 }
 
 function formulasByChapter() {
@@ -858,9 +874,16 @@ function formulasByChapter() {
 }
 
 function toggleFormulaChapter(chapter) {
-  state.formulaOpen[chapter] = !state.formulaOpen[chapter];
+  const isOpen = !state.formulaOpen[chapter];
+  state.formulaOpen[chapter] = isOpen;
   saveState();
-  render();
+  const panelId = `formula-panel-${chapter.replace(/[^A-Za-z0-9]/g, "-")}`;
+  const panel = document.getElementById(panelId);
+  const section = panel?.closest(".formula-chapter");
+  const button = section?.querySelector(".formula-chapter-toggle");
+  section?.classList.toggle("open", isOpen);
+  panel?.setAttribute("aria-hidden", String(!isOpen));
+  button?.setAttribute("aria-expanded", String(isOpen));
 }
 
 function openFormulaFor(id) {
@@ -895,7 +918,7 @@ function renderQuiz(kind) {
   const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   if (!questions) {
-    return `<section class="panel stack"><h2 class="page-title">Generate New Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><label class="filter-label" for="generatedCountEmpty">Questions</label><select id="generatedCountEmpty" class="chapter-select" onchange="setGeneratedCount(this.value)">${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}</select></div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
+    return `<section class="panel stack"><h2 class="page-title">Practice Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><label class="filter-label" for="generatedCountEmpty">Questions</label><select id="generatedCountEmpty" class="chapter-select" onchange="setGeneratedCount(this.value)">${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}</select></div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
   }
   const q = questions[run.index];
   const attempts = run.attempts[q.id] || 0;
@@ -952,7 +975,7 @@ function renderQuiz(kind) {
                 return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
               }).join("")}
             </div>
-            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
+            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds, kind)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
           </article>
         </div>
         ${formulaOpen ? renderQuizFormulaSheet() : ""}
@@ -1053,6 +1076,7 @@ function renderFormulas() {
         <h2 class="page-title">Formula Sheet</h2>
         <p class="muted">All formulas from the original formula sheet, grouped by chapter. Click a chapter to open or close its formulas.</p>
       </div>
+      ${state.formulaReturn ? `<div class="action-row"><button type="button" class="secondary" onclick="backToFormulaReturn()">Back to ${state.formulaReturn === "generated" ? "Practice Test" : "Sample Test"}</button></div>` : ""}
       <div class="formula-chapters">
         ${chapters.map(([chapter, items]) => {
           const isOpen = !!state.formulaOpen[chapter];
@@ -1207,6 +1231,7 @@ function revealContact(key) {
 
 function render() {
   const app = document.getElementById("app");
+  document.body.classList.toggle("page-transition", animateNextRender);
   const page = {
     home: renderHome,
     sample: () => renderQuiz("sample"),
@@ -1222,6 +1247,7 @@ function render() {
   }
   renderFloatingTimer();
   if (window.MathJax?.typesetPromise) MathJax.typesetPromise([app]);
+  animateNextRender = false;
 }
 
 function calcPress(key) {
