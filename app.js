@@ -575,7 +575,7 @@ function loadState() {
   }
   if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
   if (!state.generatedRun.first) state.generatedRun.first = {};
-  state.generatedCount = Math.max(5, Math.min(40, Number(state.generatedCount) || 22));
+  state.generatedCount = Math.max(5, Math.min(32, Number(state.generatedCount) || 22));
   if (state.sampleFilter === undefined) state.sampleFilter = null;
   if (!Array.isArray(state.flashOrder) || state.flashOrder.length !== flashcards.length) {
     state.flashOrder = flashcards.map((_, i) => i);
@@ -709,6 +709,18 @@ function generateTest() {
   const sd = Math.sqrt(returns.reduce((s, r, i) => s + probs[i] * Math.pow(r - mean, 2), 0));
   const q21 = makeQ("g21", "std-dev", "Chapter 8 slides 13-18", ["expected-return", "std-dev"], `Returns are 4%, 9%, 13%, 16%, 20% with probabilities .10, .20, .40, .20, .10. What is standard deviation?`, sd, pct, `Mean return is ${pct(mean)}. \\(\\sigma=\\sqrt{\\sum p_i(r_i-\\hat r)^2}=${pct(sd)}\\).`);
 
+  const extraBondRate = 0.071, extraMarket = 0.063, extraYears = 9, extraPmt = 1000 * extraBondRate;
+  const q33 = makeQ("g33", "bond", "Chapter 7 bond valuation practice", ["bond-price"], `A ${extraYears}-year bond has a ${pct(extraBondRate * 100)} annual coupon, $1,000 par, and rd = ${pct(extraMarket * 100)}. What is its price?`, pvAnnuity(extraMarket, extraYears, extraPmt, 1000), money, `Value the bond as the present value of ${extraYears} coupon payments plus par.`);
+
+  const extraD1 = 1.35, extraRs = 0.104, extraG = 0.058;
+  const q34 = makeQ("g34", "stock", "Chapter 9 constant growth practice", ["constant-growth"], `A stock will pay D1 = ${money(extraD1)}. Required return is ${pct(extraRs * 100)} and constant growth is ${pct(extraG * 100)}. What is P0?`, extraD1 / (extraRs - extraG), money, `Use \\(P_0=D_1/(r_s-g)\\).`);
+
+  const extraCapm = 4.6 + 6.8 * 0.9;
+  const q35 = makeQ("g35", "capm", "Chapter 10 CAPM practice", ["capm"], `Using CAPM, rRF = 4.60%, RPM = 6.80%, and beta = 0.90. What is rs?`, extraCapm, pct, `\\(r_s=4.60\\%+6.80\\%(0.90)=${pct(extraCapm)}\\).`);
+
+  const extraWacc = 0.45 * 5.8 + 0.05 * 8.5 + 0.50 * 11.2;
+  const q36 = makeQ("g36", "wacc", "Chapter 10 WACC practice", ["wacc"], `A firm uses 45% after-tax debt at 5.80%, 5% preferred at 8.50%, and 50% equity at 11.20%. What is WACC?`, extraWacc, pct, `\\(WACC=.45(5.80\\%)+.05(8.50\\%)+.50(11.20\\%)=${pct(extraWacc)}\\).`);
+
   const fixed = [
     { ...sampleQuestions[3], id: "g4" }, { ...sampleQuestions[6], id: "g7" }, { ...sampleQuestions[7], id: "g8" },
     { ...sampleQuestions[12], id: "g13" }, { ...sampleQuestions[13], id: "g14" }, { ...sampleQuestions[17], id: "g18" },
@@ -743,7 +755,7 @@ function generateTest() {
   const q31 = makeConceptQ("g31", "midterm-concept", "Midterm sample test Q2", [], "Money markets are markets for:", ["Long-term bonds.", "Short-term debt securities such as Treasury bills and commercial paper.", "Common stocks.", "Consumer automobile loans.", "Foreign currencies."], 1, "Money markets trade short-term debt securities.");
   const q32 = makeConceptQ("g32", "midterm-concept", "Midterm sample test Q7", ["current-ratio"], "Considered alone, which action would increase a company's current ratio?", ["An increase in notes payable.", "An increase in accounts payable.", "An increase in accounts receivable.", "An increase in accrued liabilities.", "An increase in net fixed assets."], 2, "Accounts receivable increases current assets, which can raise current ratio if current liabilities are unchanged.");
 
-  return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7], q23, q24, q25, q26, q27, q28, q29, q30, q31, q32];
+  return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7], q33, q34, q35, q36, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32];
 }
 
 function getQuestionsForKind(kind) {
@@ -988,12 +1000,20 @@ function resetQuiz(kind) {
 }
 
 function setGeneratedCount(value) {
-  state.generatedCount = Math.max(5, Math.min(40, Number(value) || 22));
+  state.generatedCount = Math.max(5, Math.min(32, Number(value) || 22));
   saveState();
 }
 
 function startGenerated() {
-  state.generated = shuffle(generateTest()).slice(0, state.generatedCount);
+  const pool = generateTest();
+  const midtermPool = pool.filter(q => q.source.startsWith("Midterm sample"));
+  const finalPool = pool.filter(q => !q.source.startsWith("Midterm sample"));
+  const midtermCount = Math.max(1, Math.round(state.generatedCount * 0.2));
+  const finalCount = state.generatedCount - midtermCount;
+  state.generated = shuffle([
+    ...shuffle(finalPool).slice(0, finalCount),
+    ...shuffle(midtermPool).slice(0, midtermCount)
+  ]);
   state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   saveState();
   routeTo("generate");
