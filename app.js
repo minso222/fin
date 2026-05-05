@@ -543,6 +543,7 @@ const state = {
   flashBack: false,
   formulaOpen: {},
   quizFormulaOpen: false,
+  contactRevealed: {},
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -577,6 +578,7 @@ function loadState() {
   }
   if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
   state.quizFormulaOpen = !!state.quizFormulaOpen;
+  if (!state.contactRevealed || typeof state.contactRevealed !== "object") state.contactRevealed = {};
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
@@ -593,7 +595,8 @@ function saveState() {
     flashIndex: state.flashIndex,
     flashOrder: state.flashOrder,
     formulaOpen: state.formulaOpen,
-    quizFormulaOpen: state.quizFormulaOpen
+    quizFormulaOpen: state.quizFormulaOpen,
+    contactRevealed: state.contactRevealed
   }));
 }
 
@@ -605,6 +608,12 @@ const escHtml = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").repl
 const formatText = s => escHtml(s)
   .replace(/\\\((.*?)\\\)/g, (_, math) => `\\(${math}\\)`)
   .replace(/\b([A-Za-z]+)_([A-Za-z0-9]+)\b/g, (_, base, sub) => `${base}<sub>${sub}</sub>`);
+
+const contactLinks = {
+  email: { label: "School Email", text: "m.tumbahangphe@my.ccsu.edu", href: "mailto:m.tumbahangphe@my.ccsu.edu", icon: "@" },
+  linkedin: { label: "LinkedIn", text: "linkedin.com/in/minsot13", href: "https://www.linkedin.com/in/minsot13", icon: "in" },
+  github: { label: "GitHub", text: "github.com/minso222", href: "https://github.com/minso222", icon: "gh" }
+};
 
 function npv(rate, cfs) {
   return cfs.reduce((sum, cf, i) => sum + cf / Math.pow(1 + rate, i), 0);
@@ -1039,15 +1048,46 @@ function renderTools() {
     </section>`;
 }
 
+function renderContactSection() {
+  const renderContactAction = key => {
+    const item = contactLinks[key];
+    if (state.contactRevealed[key]) {
+      return `<a class="contact-action revealed" href="${item.href}" target="_blank" rel="noopener noreferrer"><span class="contact-icon">${item.icon}</span>${item.text}</a>`;
+    }
+    return `<button type="button" class="contact-action" onclick="revealContact('${key}')"><span class="contact-icon">${item.icon}</span>${item.label}</button>`;
+  };
+  return `
+    <section class="contact-section" aria-labelledby="contactHeading">
+      <p class="eyebrow">Contact</p>
+      <h2 id="contactHeading">Found this helpful?</h2>
+      <p class="contact-copy">Connect with me on LinkedIn to collaborate on future projects, or just to chat.</p>
+      <div class="contact-actions">
+        ${renderContactAction("email")}
+        ${renderContactAction("linkedin")}
+        ${renderContactAction("github")}
+      </div>
+    </section>`;
+}
+
+function revealContact(key) {
+  const item = contactLinks[key];
+  if (!item) return;
+  state.contactRevealed[key] = true;
+  saveState();
+  render();
+  window.open(item.href, "_blank", "noopener,noreferrer");
+}
+
 function render() {
   const app = document.getElementById("app");
-  app.innerHTML = {
+  const page = {
     home: renderHome,
     sample: () => renderQuiz("sample"),
     generate: () => renderQuiz("generated"),
     formulas: renderFormulas,
     tools: renderTools
   }[state.route]();
+  app.innerHTML = `${page}${renderContactSection()}`;
   if (state.route === "tools") {
     syncCalc();
     syncTimer();
