@@ -171,23 +171,14 @@ body.nav-collapsed .layout {
   background: var(--sidebar-bg);
   z-index: 1;
   pointer-events: auto;
+  width: 230px;
+  overflow: hidden;
+  transition: width 0.28s ease, padding 0.28s ease, box-shadow 0.28s ease;
 }
 
 .nav-links {
   display: grid;
   gap: 0.25rem;
-}
-
-.nav-menu-toggle {
-  display: none;
-  width: 100%;
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--button-soft);
-  color: var(--text);
-  font-weight: 800;
-  margin: 0.35rem 0 0.7rem;
 }
 
 .nav-link {
@@ -211,19 +202,41 @@ body.nav-collapsed .layout {
   line-height: 1;
 }
 
-body:not(.route-home) .nav-menu-toggle {
-  display: block;
-}
-
 body.nav-collapsed .sidebar {
+  width: 72px;
   padding: 0.75rem;
 }
 
-body.nav-collapsed .nav-home-link,
-body.nav-collapsed .nav-menu-toggle {
+body.nav-collapsed .sidebar:hover,
+body.nav-collapsed .sidebar:focus-within {
+  width: 230px;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+body.nav-collapsed .nav-home-link {
   justify-content: center;
   min-height: 44px;
   padding: 0.65rem;
+}
+
+body.nav-collapsed .nav-links {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.28s ease;
+}
+
+body.nav-collapsed .sidebar:hover .nav-links,
+body.nav-collapsed .sidebar:focus-within .nav-links {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+body.nav-collapsed .nav-text,
+body.nav-collapsed .nav-links .nav-link {
+  white-space: nowrap;
 }
 
 body.nav-collapsed .nav-text {
@@ -233,6 +246,21 @@ body.nav-collapsed .nav-text {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+body.nav-collapsed .sidebar:hover .nav-home-link,
+body.nav-collapsed .sidebar:focus-within .nav-home-link {
+  justify-content: flex-start;
+  padding: 0.8rem 0.9rem;
+}
+
+body.nav-collapsed .sidebar:hover .nav-text,
+body.nav-collapsed .sidebar:focus-within .nav-text {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
 }
 
 .nav-link:hover {
@@ -839,6 +867,10 @@ body.dark .primary {
     grid-auto-flow: row;
     grid-auto-columns: initial;
     width: 72px;
+  }
+  body.nav-collapsed .sidebar:hover,
+  body.nav-collapsed .sidebar:focus-within {
+    width: min(230px, 100%);
   }
   .hero,
   .split,

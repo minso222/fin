@@ -252,7 +252,6 @@ const state = {
   flashIndex: 0,
   flashOrder: [],
   flashBack: false,
-  navOpen: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -286,7 +285,6 @@ function loadState() {
     state.flashOrder = flashcards.map((_, i) => i);
   }
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
-  state.navOpen = false;
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
 }
@@ -429,28 +427,15 @@ function startChapterPractice(chapterLabel) {
 
 function routeTo(route) {
   state.route = route;
-  if (route !== "home") state.navOpen = false;
-  else state.navOpen = true;
   syncNavigation();
   saveState();
   render();
 }
 
-function toggleNavMenu() {
-  if (state.route === "home") return;
-  state.navOpen = !state.navOpen;
-  syncNavigation();
-}
-
 function syncNavigation() {
   const awayFromHome = state.route !== "home";
   document.body.classList.toggle("route-home", !awayFromHome);
-  document.body.classList.toggle("nav-collapsed", awayFromHome && !state.navOpen);
-  document.body.classList.toggle("nav-open", awayFromHome && state.navOpen);
-  const navLinks = document.getElementById("mainNavLinks");
-  if (navLinks) navLinks.hidden = awayFromHome && !state.navOpen;
-  const menuToggle = document.getElementById("navMenuToggle");
-  if (menuToggle) menuToggle.setAttribute("aria-expanded", state.navOpen ? "true" : "false");
+  document.body.classList.toggle("nav-collapsed", awayFromHome);
   document.querySelectorAll(".nav-link").forEach(b => {
     const active = b.dataset.route === state.route;
     b.classList.toggle("active", active);
@@ -552,7 +537,7 @@ function resetQuiz(kind) {
 }
 
 function startGenerated() {
-  state.generated = generateTest();
+  state.generated = shuffle(generateTest());
   state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
   saveState();
   routeTo("generate");
@@ -1026,7 +1011,10 @@ function nextFlash() {
 function shuffleFlashcards() {
   const currentCard = state.flashOrder[state.flashIndex % state.flashOrder.length];
   state.flashOrder = shuffle(flashcards.map((_, i) => i));
-  state.flashIndex = Math.max(0, state.flashOrder.indexOf(currentCard));
+  if (state.flashOrder.length > 1 && state.flashOrder[0] === currentCard) {
+    [state.flashOrder[0], state.flashOrder[1]] = [state.flashOrder[1], state.flashOrder[0]];
+  }
+  state.flashIndex = 0;
   state.flashBack = false;
   saveState();
   render();
@@ -1038,7 +1026,6 @@ document.addEventListener("DOMContentLoaded", () => {
   themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
   themeToggle.textContent = state.dark ? "L" : "D";
   document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
-  document.getElementById("navMenuToggle")?.addEventListener("click", toggleNavMenu);
   themeToggle.addEventListener("click", () => {
     state.dark = !state.dark;
     document.body.classList.toggle("dark", state.dark);
