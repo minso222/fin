@@ -1,5 +1,41 @@
 const STORE = "fin295-study-state-v1";
 
+const timerDefaults = {
+  work: 25,
+  break: 5,
+  alarm: "alarm-clock",
+  floatingStarted: false,
+  floatingEnabled: true,
+  position: { x: null, y: null }
+};
+
+const alarmSounds = [
+  {
+    id: "alarm-clock",
+    label: "Alarm clock",
+    source: "Mathieu Kappler, CC BY-SA 4.0",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Alarm_clock_-_01.ogg"
+  },
+  {
+    id: "bright-bell",
+    label: "Bright bell",
+    source: "Achim55, CC0",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Synthetic_bell_sound.ogg"
+  },
+  {
+    id: "door-bell",
+    label: "Door bell",
+    source: "Amada44, CC0",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sound_Effect_-_Door_Bell.ogg"
+  },
+  {
+    id: "soft-gong",
+    label: "Soft gong",
+    source: "PDSounds, CC0",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gong_or_bell_vibrant_(short).ogg"
+  }
+];
+
 const formulas = [
   {
     id: "npv",
@@ -211,7 +247,7 @@ const state = {
   sample: { index: 0, attempts: {}, solved: {}, wrong: {} },
   generated: null,
   generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {} },
-  timer: { work: 25, break: 5 },
+  timer: { ...timerDefaults },
   flashIndex: 0,
   flashBack: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
@@ -221,10 +257,19 @@ let activeTimer = null;
 let timerRemaining = 25 * 60;
 let timerMode = "work";
 let timerRunning = false;
+let dragTimer = null;
+let alarmPreviewAudio = null;
+let alarmPreviewContext = null;
+let alarmPreviewPlaying = false;
 
 function loadState() {
   const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
   Object.assign(state, saved);
+  state.timer = {
+    ...timerDefaults,
+    ...(saved.timer || {}),
+    position: { ...timerDefaults.position, ...(saved.timer?.position || {}) }
+  };
   if (!state.sample || typeof state.sample.index !== "number") {
     state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
   }
@@ -234,6 +279,7 @@ function loadState() {
   }
   if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
   if (state.sampleFilter === undefined) state.sampleFilter = null;
+  timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
 }
 
@@ -435,6 +481,7 @@ function renderQuiz(kind) {
         <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
         <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
         <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
+        ${kind === "generated" ? `<button type="button" class="secondary" onclick="startGenerated()">Generate new set</button>` : ""}
       </div>
     </section>`;
 }
@@ -557,13 +604,27 @@ function renderTools() {
         </article>
         <article class="tool-panel">
           <h3>Pomodoro Timer</h3>
-          <div id="timerFace" class="timer-face">25:00</div>
+          <div id="timerFace" class="timer-face" data-timer-face>25:00</div>
           <div class="field-row">
             <label>Work minutes<input id="workLen" type="number" min="1" max="120" value="${state.timer.work}" onchange="setTimerPref('work', this.value)"></label>
             <label>Break minutes<input id="breakLen" type="number" min="1" max="60" value="${state.timer.break}" onchange="setTimerPref('break', this.value)"></label>
           </div>
+          <div class="alarm-row">
+            <label>Alarm sound
+              <select id="alarmSound" onchange="setAlarmSound(this.value)">
+                ${alarmSounds.map(sound => `<option value="${sound.id}" ${state.timer.alarm === sound.id ? "selected" : ""}>${sound.label}</option>`).join("")}
+              </select>
+            </label>
+            <button id="alarmPreviewButton" type="button" class="secondary" onclick="previewAlarm()">Preview</button>
+          </div>
+          <p id="alarmCredit" class="muted mini-copy">${alarmSounds.find(sound => sound.id === state.timer.alarm)?.source || ""}</p>
+          ${state.timer.floatingStarted ? `
+            <label class="toggle-line">
+              <input id="floatingTimerToggle" type="checkbox" ${state.timer.floatingEnabled ? "checked" : ""} onchange="setFloatingTimerEnabled(this.checked)">
+              Floating timer
+            </label>` : ""}
           <div class="action-row" style="margin-top:.8rem">
-            <button type="button" class="primary" onclick="toggleTimer()">Start/Pause</button>
+            <button type="button" class="primary" onclick="toggleTimer()"><span data-timer-running>Start</span></button>
             <button type="button" class="secondary" onclick="resetTimer()">Reset</button>
           </div>
           <p id="timerCue" class="muted" aria-live="polite">Ready for a focused study interval.</p>
@@ -605,7 +666,9 @@ function render() {
   if (state.route === "tools") {
     syncCalc();
     syncTimer();
+    syncAlarmPreview();
   }
+  renderFloatingTimer();
   if (window.MathJax?.typesetPromise) MathJax.typesetPromise([app]);
 }
 
@@ -676,20 +739,201 @@ function setTimerPref(kind, value) {
 }
 
 function syncTimer() {
-  const face = document.getElementById("timerFace");
-  if (!face) return;
   const m = Math.floor(timerRemaining / 60).toString().padStart(2, "0");
   const s = Math.floor(timerRemaining % 60).toString().padStart(2, "0");
-  face.textContent = `${m}:${s}`;
+  const label = timerMode === "work" ? "Focus" : "Break";
+  document.querySelectorAll("[data-timer-face]").forEach(face => {
+    face.textContent = `${m}:${s}`;
+  });
+  document.querySelectorAll("[data-timer-mode]").forEach(node => {
+    node.textContent = label;
+  });
+  document.querySelectorAll("[data-timer-running]").forEach(node => {
+    node.textContent = timerRunning ? "Pause" : "Start";
+  });
+  renderFloatingTimer();
+}
+
+function syncAlarmPreview() {
+  const button = document.getElementById("alarmPreviewButton");
+  if (button) button.textContent = alarmPreviewPlaying ? "Pause" : "Preview";
+}
+
+function setAlarmSound(value) {
+  if (!alarmSounds.some(sound => sound.id === value)) return;
+  stopAlarmPreview();
+  state.timer.alarm = value;
+  saveState();
+  const credit = document.getElementById("alarmCredit");
+  const sound = alarmSounds.find(item => item.id === value);
+  if (credit) credit.textContent = sound?.source || "";
+}
+
+function previewAlarm() {
+  if (alarmPreviewPlaying) {
+    stopAlarmPreview();
+    return;
+  }
+  const selected = alarmSounds.find(sound => sound.id === state.timer.alarm) || alarmSounds[0];
+  stopAlarmPreview();
+  alarmPreviewAudio = new Audio(selected.url);
+  alarmPreviewAudio.volume = 0.72;
+  alarmPreviewAudio.addEventListener("ended", stopAlarmPreview, { once: true });
+  const preview = alarmPreviewAudio;
+  alarmPreviewAudio.play()
+    .then(() => {
+      if (alarmPreviewAudio !== preview) return;
+      alarmPreviewPlaying = true;
+      syncAlarmPreview();
+    })
+    .catch(() => playFallbackAlarm(true));
+}
+
+function stopAlarmPreview() {
+  if (alarmPreviewAudio) {
+    alarmPreviewAudio.pause();
+    alarmPreviewAudio.currentTime = 0;
+    alarmPreviewAudio = null;
+  }
+  if (alarmPreviewContext) {
+    alarmPreviewContext.close().catch(() => {});
+    alarmPreviewContext = null;
+  }
+  alarmPreviewPlaying = false;
+  syncAlarmPreview();
+}
+
+function playAlarm() {
+  const selected = alarmSounds.find(sound => sound.id === state.timer.alarm) || alarmSounds[0];
+  const audio = new Audio(selected.url);
+  audio.volume = 0.72;
+  audio.play().catch(playFallbackAlarm);
+}
+
+function playFallbackAlarm(isPreview = false) {
+  try {
+    const ctx = new AudioContext();
+    if (isPreview) {
+      alarmPreviewContext = ctx;
+      alarmPreviewPlaying = true;
+      syncAlarmPreview();
+    }
+    const notes = [880, 1046, 1318];
+    notes.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + index * 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + index * 0.16 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + index * 0.16 + 0.14);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + index * 0.16);
+      osc.stop(ctx.currentTime + index * 0.16 + 0.15);
+    });
+    setTimeout(() => {
+      ctx.close().catch(() => {});
+      if (isPreview && alarmPreviewContext === ctx) {
+        alarmPreviewContext = null;
+        alarmPreviewPlaying = false;
+        syncAlarmPreview();
+      }
+    }, 720);
+  } catch {}
+}
+
+function setFloatingTimerEnabled(enabled) {
+  state.timer.floatingEnabled = !!enabled;
+  saveState();
+  const toggle = document.getElementById("floatingTimerToggle");
+  if (toggle) toggle.checked = state.timer.floatingEnabled;
+  renderFloatingTimer();
+}
+
+function renderFloatingTimer() {
+  let floating = document.getElementById("floatingTimer");
+  const shouldShow = state.timer.floatingStarted && state.timer.floatingEnabled;
+  if (!shouldShow) {
+    if (floating) floating.hidden = true;
+    return;
+  }
+  if (!floating) {
+    floating = document.createElement("aside");
+    floating.id = "floatingTimer";
+    floating.className = "floating-timer";
+    floating.setAttribute("aria-label", "Floating Pomodoro timer");
+    document.body.appendChild(floating);
+    floating.innerHTML = `
+      <button type="button" class="floating-drag" aria-label="Move floating timer" title="Move timer">+</button>
+      <div class="floating-copy">
+        <span data-timer-mode></span>
+        <strong data-timer-face></strong>
+      </div>
+      <div class="floating-actions">
+        <button type="button" onclick="toggleTimer()" data-timer-running></button>
+        <button type="button" onclick="setFloatingTimerEnabled(false)">Hide</button>
+      </div>`;
+  }
+  const m = Math.floor(timerRemaining / 60).toString().padStart(2, "0");
+  const s = Math.floor(timerRemaining % 60).toString().padStart(2, "0");
+  floating.hidden = false;
+  floating.querySelector("[data-timer-mode]").textContent = timerMode === "work" ? "Focus" : "Break";
+  floating.querySelector("[data-timer-face]").textContent = `${m}:${s}`;
+  floating.querySelector("[data-timer-running]").textContent = timerRunning ? "Pause" : "Start";
+  positionFloatingTimer(floating);
+  wireFloatingDrag(floating);
+}
+
+function positionFloatingTimer(floating) {
+  const x = Number.isFinite(state.timer.position.x) ? state.timer.position.x : window.innerWidth - 260;
+  const y = Number.isFinite(state.timer.position.y) ? state.timer.position.y : window.innerHeight - 170;
+  const clampedX = Math.max(12, Math.min(x, window.innerWidth - floating.offsetWidth - 12));
+  const clampedY = Math.max(88, Math.min(y, window.innerHeight - floating.offsetHeight - 12));
+  floating.style.left = `${clampedX}px`;
+  floating.style.top = `${clampedY}px`;
+}
+
+function wireFloatingDrag(floating) {
+  const handle = floating.querySelector(".floating-drag");
+  if (!handle || handle.dataset.bound) return;
+  handle.dataset.bound = "true";
+  handle.addEventListener("pointerdown", event => {
+    dragTimer = {
+      offsetX: event.clientX - floating.offsetLeft,
+      offsetY: event.clientY - floating.offsetTop
+    };
+    handle.setPointerCapture(event.pointerId);
+    floating.classList.add("dragging");
+  });
+  handle.addEventListener("pointermove", event => {
+    if (!dragTimer) return;
+    state.timer.position.x = Math.max(12, Math.min(event.clientX - dragTimer.offsetX, window.innerWidth - floating.offsetWidth - 12));
+    state.timer.position.y = Math.max(88, Math.min(event.clientY - dragTimer.offsetY, window.innerHeight - floating.offsetHeight - 12));
+    floating.style.left = `${state.timer.position.x}px`;
+    floating.style.top = `${state.timer.position.y}px`;
+  });
+  handle.addEventListener("pointerup", event => {
+    if (!dragTimer) return;
+    dragTimer = null;
+    floating.classList.remove("dragging");
+    handle.releasePointerCapture(event.pointerId);
+    saveState();
+  });
 }
 
 function toggleTimer() {
   if (timerRunning) {
     clearInterval(activeTimer);
     timerRunning = false;
+    syncTimer();
     return;
   }
+  if (state.route === "tools" && !state.timer.floatingStarted) {
+    state.timer.floatingStarted = true;
+    state.timer.floatingEnabled = true;
+    saveState();
+  }
   timerRunning = true;
+  syncTimer();
   activeTimer = setInterval(() => {
     timerRemaining -= 1;
     if (timerRemaining <= 0) {
@@ -697,13 +941,7 @@ function toggleTimer() {
       timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
       const cue = document.getElementById("timerCue");
       if (cue) cue.textContent = timerMode === "work" ? "Break complete. Back to work." : "Work interval complete. Take a break.";
-      try {
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator();
-        osc.connect(ctx.destination);
-        osc.start();
-        setTimeout(() => { osc.stop(); ctx.close(); }, 180);
-      } catch {}
+      playAlarm();
     }
     syncTimer();
   }, 1000);
@@ -733,12 +971,15 @@ document.addEventListener("DOMContentLoaded", () => {
   loadState();
   const themeToggle = document.getElementById("themeToggle");
   themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
+  themeToggle.textContent = state.dark ? "L" : "D";
   document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
   themeToggle.addEventListener("click", () => {
     state.dark = !state.dark;
     document.body.classList.toggle("dark", state.dark);
     themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
+    themeToggle.textContent = state.dark ? "L" : "D";
     saveState();
   });
+  window.addEventListener("resize", () => renderFloatingTimer());
   render();
 });
