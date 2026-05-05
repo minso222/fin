@@ -6,6 +6,7 @@ const timerDefaults = {
   alarm: "alarm-clock",
   floatingStarted: false,
   floatingEnabled: true,
+  floatingMinimized: false,
   position: { x: null, y: null }
 };
 
@@ -249,7 +250,9 @@ const state = {
   generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {} },
   timer: { ...timerDefaults },
   flashIndex: 0,
+  flashOrder: [],
   flashBack: false,
+  navOpen: false,
   calc: { display: "0", expr: "", tvm: { N: null, IY: null, PV: null, PMT: null, FV: null } }
 };
 
@@ -279,6 +282,11 @@ function loadState() {
   }
   if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
   if (state.sampleFilter === undefined) state.sampleFilter = null;
+  if (!Array.isArray(state.flashOrder) || state.flashOrder.length !== flashcards.length) {
+    state.flashOrder = flashcards.map((_, i) => i);
+  }
+  state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
+  state.navOpen = false;
   timerRemaining = (timerMode === "work" ? state.timer.work : state.timer.break) * 60;
   document.body.classList.toggle("dark", !!state.dark);
 }
@@ -291,7 +299,8 @@ function saveState() {
     generated: state.generated,
     generatedRun: state.generatedRun,
     timer: state.timer,
-    flashIndex: state.flashIndex
+    flashIndex: state.flashIndex,
+    flashOrder: state.flashOrder
   }));
 }
 
@@ -299,6 +308,10 @@ const money = n => `$${Number(n).toLocaleString(undefined, { minimumFractionDigi
 const pct = n => `${Number(n).toFixed(2)}%`;
 const shuffle = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
 const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+const escHtml = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const formatText = s => escHtml(s)
+  .replace(/\\\((.*?)\\\)/g, (_, math) => `\\(${math}\\)`)
+  .replace(/\b([A-Za-z]+)_([A-Za-z0-9]+)\b/g, (_, base, sub) => `${base}<sub>${sub}</sub>`);
 
 function npv(rate, cfs) {
   return cfs.reduce((sum, cf, i) => sum + cf / Math.pow(1 + rate, i), 0);
@@ -416,13 +429,34 @@ function startChapterPractice(chapterLabel) {
 
 function routeTo(route) {
   state.route = route;
+  if (route !== "home") state.navOpen = false;
+  else state.navOpen = true;
+  syncNavigation();
+  saveState();
+  render();
+}
+
+function toggleNavMenu() {
+  if (state.route === "home") return;
+  state.navOpen = !state.navOpen;
+  syncNavigation();
+}
+
+function syncNavigation() {
+  const awayFromHome = state.route !== "home";
+  document.body.classList.toggle("route-home", !awayFromHome);
+  document.body.classList.toggle("nav-collapsed", awayFromHome && !state.navOpen);
+  document.body.classList.toggle("nav-open", awayFromHome && state.navOpen);
+  const navLinks = document.getElementById("mainNavLinks");
+  if (navLinks) navLinks.hidden = awayFromHome && !state.navOpen;
+  const menuToggle = document.getElementById("navMenuToggle");
+  if (menuToggle) menuToggle.setAttribute("aria-expanded", state.navOpen ? "true" : "false");
   document.querySelectorAll(".nav-link").forEach(b => {
-    const active = b.dataset.route === route;
+    const active = b.dataset.route === state.route;
     b.classList.toggle("active", active);
     if (active) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
-  render();
 }
 
 function formulaLinks(ids) {
@@ -563,10 +597,10 @@ function renderFormulas() {
             <span class="badge">${f.chapter}</span>
             <h3>${f.title}</h3>
             <div class="formula">\\(${f.tex}\\)</div>
-            <p>${f.plain}</p>
-            <p><strong>Variables:</strong> ${f.variables}</p>
-            <p><strong>When to use:</strong> ${f.when}</p>
-            <p><strong>Worked example:</strong> ${f.example}</p>
+            <p>${formatText(f.plain)}</p>
+            <p><strong>Variables:</strong> ${formatText(f.variables)}</p>
+            <p><strong>When to use:</strong> ${formatText(f.when)}</p>
+            <p><strong>Worked example:</strong> ${formatText(f.example)}</p>
             <p class="muted">${f.source}</p>
           </article>`).join("")}
       </div>
@@ -583,7 +617,9 @@ const flashcards = [
 ];
 
 function renderTools() {
-  const f = flashcards[state.flashIndex % flashcards.length];
+  if (!state.flashOrder.length) state.flashOrder = flashcards.map((_, i) => i);
+  const flashPosition = state.flashIndex % state.flashOrder.length;
+  const f = flashcards[state.flashOrder[flashPosition]];
   const byChapter = ["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"].map(ch => {
     const count = sampleQuestions.filter(q => q.source.includes(ch)).length;
     const solved = sampleQuestions.filter(q => q.source.includes(ch) && state.sample.solved[q.id]).length;
@@ -634,7 +670,11 @@ function renderTools() {
         <article class="tool-panel">
           <h3>Flashcards</h3>
           <button type="button" class="flashcard" onclick="flipFlash()">${state.flashBack ? f[1] : f[0]}</button>
-          <div class="action-row" style="margin-top:.8rem"><button type="button" class="secondary" onclick="nextFlash()">Next card</button></div>
+          <div class="action-row" style="margin-top:.8rem">
+            <button type="button" class="secondary" onclick="previousFlash()">Back</button>
+            <button type="button" class="secondary" onclick="shuffleFlashcards()">Shuffle</button>
+            <button type="button" class="secondary" onclick="nextFlash()">Next card</button>
+          </div>
         </article>
         <article class="tool-panel">
           <h3>Chapter drills</h3>
@@ -843,9 +883,16 @@ function playFallbackAlarm(isPreview = false) {
 
 function setFloatingTimerEnabled(enabled) {
   state.timer.floatingEnabled = !!enabled;
+  if (enabled) state.timer.floatingMinimized = false;
   saveState();
   const toggle = document.getElementById("floatingTimerToggle");
   if (toggle) toggle.checked = state.timer.floatingEnabled;
+  renderFloatingTimer();
+}
+
+function setFloatingTimerMinimized(minimized) {
+  state.timer.floatingMinimized = !!minimized;
+  saveState();
   renderFloatingTimer();
 }
 
@@ -870,12 +917,14 @@ function renderFloatingTimer() {
       </div>
       <div class="floating-actions">
         <button type="button" onclick="toggleTimer()" data-timer-running></button>
-        <button type="button" onclick="setFloatingTimerEnabled(false)">Hide</button>
+        <button type="button" onclick="setFloatingTimerMinimized(true)" data-timer-hide>Hide</button>
+        <button type="button" onclick="setFloatingTimerMinimized(false)" data-timer-show>Show</button>
       </div>`;
   }
   const m = Math.floor(timerRemaining / 60).toString().padStart(2, "0");
   const s = Math.floor(timerRemaining % 60).toString().padStart(2, "0");
   floating.hidden = false;
+  floating.classList.toggle("minimized", !!state.timer.floatingMinimized);
   floating.querySelector("[data-timer-mode]").textContent = timerMode === "work" ? "Focus" : "Break";
   floating.querySelector("[data-timer-face]").textContent = `${m}:${s}`;
   floating.querySelector("[data-timer-running]").textContent = timerRunning ? "Pause" : "Start";
@@ -960,8 +1009,24 @@ function flipFlash() {
   render();
 }
 
+function previousFlash() {
+  state.flashIndex = (state.flashIndex - 1 + flashcards.length) % flashcards.length;
+  state.flashBack = false;
+  saveState();
+  render();
+}
+
 function nextFlash() {
   state.flashIndex = (state.flashIndex + 1) % flashcards.length;
+  state.flashBack = false;
+  saveState();
+  render();
+}
+
+function shuffleFlashcards() {
+  const currentCard = state.flashOrder[state.flashIndex % state.flashOrder.length];
+  state.flashOrder = shuffle(flashcards.map((_, i) => i));
+  state.flashIndex = Math.max(0, state.flashOrder.indexOf(currentCard));
   state.flashBack = false;
   saveState();
   render();
@@ -973,6 +1038,7 @@ document.addEventListener("DOMContentLoaded", () => {
   themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
   themeToggle.textContent = state.dark ? "L" : "D";
   document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
+  document.getElementById("navMenuToggle")?.addEventListener("click", toggleNavMenu);
   themeToggle.addEventListener("click", () => {
     state.dark = !state.dark;
     document.body.classList.toggle("dark", state.dark);
@@ -980,6 +1046,7 @@ document.addEventListener("DOMContentLoaded", () => {
     themeToggle.textContent = state.dark ? "L" : "D";
     saveState();
   });
+  syncNavigation();
   window.addEventListener("resize", () => renderFloatingTimer());
   render();
 });

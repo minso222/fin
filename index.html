@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css" />
     <script>
       window.MathJax = {
-        tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]] },
+        tex: { inlineMath: [["\\(", "\\)"]] },
         svg: { fontCache: "global" }
       };
     </script>
@@ -29,11 +29,14 @@
     </header>
     <div class="layout">
       <nav class="sidebar" aria-label="Main navigation">
-        <button type="button" data-route="home" class="nav-link active" aria-current="page">Home</button>
-        <button type="button" data-route="sample" class="nav-link">Sample Test</button>
-        <button type="button" data-route="generate" class="nav-link">Generate New Test</button>
-        <button type="button" data-route="formulas" class="nav-link">Formula Sheet</button>
-        <button type="button" data-route="tools" class="nav-link">Study Tools</button>
+        <button type="button" data-route="home" class="nav-link nav-home-link active" aria-current="page"><span aria-hidden="true">&#8962;</span><span class="nav-text">Home</span></button>
+        <button id="navMenuToggle" type="button" class="nav-menu-toggle" aria-expanded="false" aria-controls="mainNavLinks">Menu</button>
+        <div id="mainNavLinks" class="nav-links">
+          <button type="button" data-route="sample" class="nav-link">Sample Test</button>
+          <button type="button" data-route="generate" class="nav-link">Generate New Test</button>
+          <button type="button" data-route="formulas" class="nav-link">Formula Sheet</button>
+          <button type="button" data-route="tools" class="nav-link">Study Tools</button>
+        </div>
       </nav>
       <main id="app" tabindex="-1"></main>
     </div>
