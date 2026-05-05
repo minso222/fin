@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIN 295 Final Study Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]] },
+        svg: { fontCache: "global" }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#app">Skip to content</a>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">FIN 295</p>
+        <h1>Final Study Studio</h1>
+      </div>
+      <button id="themeToggle" class="icon-button" type="button" aria-label="Toggle dark mode">◐</button>
+    </header>
+    <div class="layout">
+      <nav class="sidebar" aria-label="Main navigation">
+        <button data-route="home" class="nav-link active">Home</button>
+        <button data-route="sample" class="nav-link">Sample Test</button>
+        <button data-route="generate" class="nav-link">Generate New Test</button>
+        <button data-route="formulas" class="nav-link">Formula Sheet</button>
+        <button data-route="tools" class="nav-link">Study Tools</button>
+      </nav>
+      <main id="app" tabindex="-1"></main>
+    </div>
+  </body>
+</html>
