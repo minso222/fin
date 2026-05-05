@@ -1,4 +1,5 @@
 const STORE = "fin295-study-state-v1";
+const FORMULA_PDF = "assets/fin-295-final-formula.pdf";
 
 const timerDefaults = {
   work: 25,
@@ -775,19 +776,9 @@ function renderQuizFormulaSheet() {
     <aside class="quiz-formula-sheet" aria-label="Original formula sheet">
       <div class="quiz-formula-head">
         <h3>Formula Sheet</h3>
-        <span class="badge">Original docx</span>
+        <span class="badge">Original PDF</span>
       </div>
-      <div class="quiz-formula-scroll">
-        ${formulasByChapter().map(([chapter, items]) => `
-          <section class="quiz-formula-chapter">
-            <h4>${chapter}</h4>
-            ${items.map(f => `
-              <article class="quiz-formula-item">
-                <h5>${f.title}</h5>
-                <div class="formula compact">\\(${f.tex}\\)</div>
-              </article>`).join("")}
-          </section>`).join("")}
-      </div>
+      <iframe class="quiz-formula-pdf" title="FIN 295 Final Formula Sheet" src="${FORMULA_PDF}#toolbar=0&navpanes=0"></iframe>
     </aside>`;
 }
 
@@ -847,14 +838,14 @@ function renderQuiz(kind) {
             </div>
             ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
           </article>
-          <div class="action-row">
-            <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
-            <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
-            <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
-            ${kind === "generated" ? `<button type="button" class="secondary" onclick="startGenerated()">Generate new set</button>` : ""}
-          </div>
         </div>
         ${formulaOpen ? renderQuizFormulaSheet() : ""}
+      </div>
+      <div class="action-row">
+        <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
+        <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
+        <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
+        ${kind === "generated" ? `<button type="button" class="secondary" onclick="startGenerated()">Generate new set</button>` : ""}
       </div>
     </section>`;
 }
