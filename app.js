@@ -584,6 +584,7 @@ function loadState() {
   }
   if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
   state.quizFormulaOpen = !!state.quizFormulaOpen;
+  if (!["sample", "generated"].includes(state.formulaReturn)) state.formulaReturn = null;
   if (!state.contactRevealed || typeof state.contactRevealed !== "object") state.contactRevealed = {};
   state.mobileMenuOpen = false;
   state.flashIndex = Math.max(0, Math.min(Number(state.flashIndex) || 0, flashcards.length - 1));
@@ -604,6 +605,7 @@ function saveState() {
     flashOrder: state.flashOrder,
     formulaOpen: state.formulaOpen,
     quizFormulaOpen: state.quizFormulaOpen,
+    formulaReturn: state.formulaReturn,
     contactRevealed: state.contactRevealed
   }));
 }
@@ -782,12 +784,12 @@ function startChapterPractice(chapterLabel) {
   routeTo("sample");
 }
 
-function routeTo(route) {
+function routeTo(route, options = {}) {
   if (document.activeElement?.closest?.(".sidebar, .mobile-menu")) {
     document.activeElement.blur();
   }
   animateNextRender = true;
-  if (route !== "formulas") state.formulaReturn = null;
+  if (!options.keepFormulaReturn) state.formulaReturn = null;
   state.route = route;
   state.mobileMenuOpen = false;
   syncNavigation();
@@ -854,7 +856,7 @@ function formulaLinks(ids, returnKind = null) {
 
 function goToFormulaFromQuiz(id, returnKind) {
   state.formulaReturn = returnKind || null;
-  routeTo("formulas");
+  routeTo("formulas", { keepFormulaReturn: true });
   setTimeout(() => openFormulaFor(id), 40);
 }
 
@@ -928,8 +930,15 @@ function renderQuiz(kind) {
   const firstAnswers = run.first || {};
   const firstTotal = Object.keys(firstAnswers).length;
   const firstCorrect = Object.values(firstAnswers).filter(Boolean).length;
-  const firstAccuracy = firstTotal ? `${firstCorrect}/${firstTotal} (${pct(firstCorrect / firstTotal * 100)})` : "0/0";
-  const firstAccuracyRow = kind === "generated" ? `<div class="question-meta"><span>First-try accuracy ${firstAccuracy}</span></div>` : "";
+  const firstAccuracyPct = firstTotal ? Math.round(firstCorrect / firstTotal * 100) : 0;
+  const firstAccuracyRow = kind === "generated" ? `
+    <div class="accuracy-widget" aria-label="First-try accuracy ${firstAccuracyPct}%">
+      <div class="accuracy-label">Accuracy</div>
+      <div class="accuracy-bar">
+        <span class="accuracy-fill" style="width:${firstAccuracyPct}%"></span>
+        <span class="accuracy-value">${firstAccuracyPct}%</span>
+      </div>
+    </div>` : "";
   const formulaOpen = !!state.quizFormulaOpen;
   const filterRow = kind === "sample" ? `
     <div class="filter-row">
@@ -1076,7 +1085,7 @@ function renderFormulas() {
         <h2 class="page-title">Formula Sheet</h2>
         <p class="muted">All formulas from the original formula sheet, grouped by chapter. Click a chapter to open or close its formulas.</p>
       </div>
-      ${state.formulaReturn ? `<div class="action-row"><button type="button" class="secondary" onclick="backToFormulaReturn()">Back to ${state.formulaReturn === "generated" ? "Practice Test" : "Sample Test"}</button></div>` : ""}
+      ${state.formulaReturn ? `<button type="button" class="formula-return-floating" onclick="backToFormulaReturn()">Back to ${state.formulaReturn === "generated" ? "Practice Test" : "Sample Test"}</button>` : ""}
       <div class="formula-chapters">
         ${chapters.map(([chapter, items]) => {
           const isOpen = !!state.formulaOpen[chapter];
