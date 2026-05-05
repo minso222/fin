@@ -612,7 +612,7 @@ const formatText = s => escHtml(s)
   .replace(/\b([A-Za-z]+)_([A-Za-z0-9]+)\b/g, (_, base, sub) => `${base}<sub>${sub}</sub>`);
 
 const contactLinks = {
-  email: { label: "School Email", text: "m.tumbahangphe@my.ccsu.edu", icon: "@" },
+  email: { label: "School Email", text: "m.tumbahangphe@my.ccsu.edu", href: "mailto:m.tumbahangphe@my.ccsu.edu", icon: "@" },
   linkedin: { label: "LinkedIn", text: "linkedin.com/in/minsot13", href: "https://www.linkedin.com/in/minsot13", icon: "in" },
   github: { label: "GitHub", text: "github.com/minso222", href: "https://github.com/minso222", icon: "gh" }
 };
@@ -1118,6 +1118,7 @@ function revealContact(key) {
   state.contactRevealed[key] = true;
   saveState();
   render();
+  if (key === "email") window.open(item.href, "_blank", "noopener,noreferrer");
 }
 
 function render() {
