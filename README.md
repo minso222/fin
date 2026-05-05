@@ -8,9 +8,18 @@ Open `index.html` in a browser. No build step is required.
 
 Math typesetting uses MathJax from a CDN, so formulas render best with an internet connection. The app itself is static HTML, CSS, and JavaScript.
 
+## Host for peers (GitHub, Vercel, Netlify)
+
+The project is a **static site** (no server). Push the repo to GitHub, then:
+
+- **GitHub Pages**: Repository Settings → Pages → Build from branch `main`, folder `/` (root), or publish the `main` branch and set the Pages source to the root. Share the `*.github.io` URL.
+- **Vercel / Netlify**: Import the GitHub repo, leave defaults (no framework; publish directory `.`). You get an HTTPS URL you can share with classmates.
+
+Do not embed secret API keys; generated exams are assembled in the browser from local question data.
+
 ## Stack Rationale
 
-I used a dependency-free static web app because Node/npm is not installed in this workspace. Plain HTML/CSS/JS keeps the project fast, portable, and easy to run by opening one file, while MathJax provides proper formula rendering. State such as dark mode, quiz progress, generated tests, timer settings, and flashcard position is persisted in `localStorage`.
+This is a dependency-free static web app (HTML, CSS, vanilla JavaScript) instead of React + Vite + Tailwind so it runs anywhere with zero install: open one file locally or deploy the folder as-is. MathJax provides formula rendering comparable to KaTeX for this use case. State such as dark mode, quiz progress, wrong-answer markers, chapter filter, generated tests, timer settings, and flashcard position is persisted in `localStorage`.
 
 ## Features
 
@@ -22,7 +31,7 @@ I used a dependency-free static web app because Node/npm is not installed in thi
 - Formula sheet with typeset formulas, variable definitions, use cases, and worked examples.
 - BAII Plus-style calculator with TVM storage keys, `CPT`, `CE/C`, `2nd CLR TVM`, arithmetic, and sign change.
 - Configurable Pomodoro timer with local persistence and audio cue.
-- Dark mode, flashcards, and progress dashboard.
+- Dark mode, flashcards, chapter-filtered drills (sample final), and a per-chapter progress dashboard.
 
 ## Source Mapping
 

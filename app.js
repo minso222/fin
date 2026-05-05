@@ -207,9 +207,10 @@ const sampleQuestions = [
 const state = {
   route: "home",
   dark: false,
-  sample: { index: 0, attempts: {}, solved: {} },
+  sampleFilter: null,
+  sample: { index: 0, attempts: {}, solved: {}, wrong: {} },
   generated: null,
-  generatedRun: { index: 0, attempts: {}, solved: {} },
+  generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {} },
   timer: { work: 25, break: 5 },
   flashIndex: 0,
   flashBack: false,
@@ -224,12 +225,22 @@ let timerRunning = false;
 function loadState() {
   const saved = JSON.parse(localStorage.getItem(STORE) || "{}");
   Object.assign(state, saved);
+  if (!state.sample || typeof state.sample.index !== "number") {
+    state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  }
+  if (!state.sample.wrong) state.sample.wrong = {};
+  if (!state.generatedRun || typeof state.generatedRun.index !== "number") {
+    state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  }
+  if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
+  if (state.sampleFilter === undefined) state.sampleFilter = null;
   document.body.classList.toggle("dark", !!state.dark);
 }
 
 function saveState() {
   localStorage.setItem(STORE, JSON.stringify({
     dark: state.dark,
+    sampleFilter: state.sampleFilter,
     sample: state.sample,
     generated: state.generated,
     generatedRun: state.generatedRun,
@@ -241,6 +252,7 @@ function saveState() {
 const money = n => `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const pct = n => `${Number(n).toFixed(2)}%`;
 const shuffle = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 function npv(rate, cfs) {
   return cfs.reduce((sum, cf, i) => sum + cf / Math.pow(1 + rate, i), 0);
@@ -312,8 +324,8 @@ function generateTest() {
   const capm = 4.2 + 7.5 * 1.1;
   const q15 = makeQ("g15", "capm", "Chapter 10 slides 17-20", ["capm"], `Using CAPM, rRF = 4.20%, RPM = 7.50%, and beta = 1.10. What is rs?`, capm, pct, `\\(r_s=4.20\\%+7.50\\%(1.10)=${pct(capm)}\\).`);
 
-  const wacc = 0.35 * 5.4 + 0.1 * 8.2 + 0.55 * 10.8;
-  const q16 = makeQ("g16", "wacc", "Chapter 10 slides 4-7", ["wacc"], `A firm uses 35% after-tax debt at 5.40%, 10% preferred at 8.20%, and 55% equity at 10.80%. What is WACC?`, wacc, pct, `\\(WACC=.35(5.40\\%)+.10(8.20\\%)+.55(10.80\\%)=${pct(wacc)}\\).`);
+  const waccBlend = 0.35 * 5.4 + 0.1 * 8.2 + 0.55 * 10.8;
+  const q16 = makeQ("g16", "wacc", "Chapter 10 slides 4-7", ["wacc"], `A firm uses 35% after-tax debt at 5.40%, 10% preferred at 8.20%, and 55% equity at 10.80%. What is WACC?`, waccBlend, pct, `\\(WACC=.35(5.40\\%)+.10(8.20\\%)+.55(10.80\\%)=${pct(waccBlend)}\\).`);
 
   const tato = 31500 / 24500;
   const q17 = makeQ("g17", "ratio", "Formula sheet Chapter 4", ["tato"], `Sales are $31,500 and total assets are $24,500. What is TATO?`, tato, n => n.toFixed(2), `\\(TATO=31500/24500=${tato.toFixed(2)}\\).`);
@@ -334,9 +346,36 @@ function generateTest() {
   return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7]];
 }
 
+function getQuestionsForKind(kind) {
+  if (kind === "generated") return state.generated;
+  if (state.sampleFilter) return sampleQuestions.filter(q => q.source.includes(state.sampleFilter));
+  return sampleQuestions;
+}
+
+function setSampleFilter(value) {
+  state.sampleFilter = value || null;
+  state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  saveState();
+  render();
+}
+
+function startChapterPractice(chapterLabel) {
+  const subset = sampleQuestions.filter(q => q.source.includes(chapterLabel));
+  if (!subset.length) return;
+  state.sampleFilter = chapterLabel;
+  state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  saveState();
+  routeTo("sample");
+}
+
 function routeTo(route) {
   state.route = route;
-  document.querySelectorAll(".nav-link").forEach(b => b.classList.toggle("active", b.dataset.route === route));
+  document.querySelectorAll(".nav-link").forEach(b => {
+    const active = b.dataset.route === route;
+    b.classList.toggle("active", active);
+    if (active) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
   render();
 }
 
@@ -344,61 +383,80 @@ function formulaLinks(ids) {
   if (!ids || !ids.length) return "";
   return `<p><strong>Formula link:</strong> ${ids.map(id => {
     const f = formulas.find(x => x.id === id);
-    return `<button class="small-button" onclick="routeTo('formulas'); setTimeout(()=>document.getElementById('formula-${id}')?.scrollIntoView({behavior:'smooth'}), 40)">${f?.title || id}</button>`;
+    return `<button type="button" class="small-button" onclick="routeTo('formulas'); setTimeout(()=>document.getElementById('formula-${id}')?.scrollIntoView({behavior:'smooth'}), 40)">${f?.title || id}</button>`;
   }).join(" ")}</p>`;
 }
 
 function renderQuiz(kind) {
-  const questions = kind === "sample" ? sampleQuestions : state.generated;
+  const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   if (!questions) {
-    return `<section class="panel stack"><h2 class="page-title">Generate New Test</h2><p class="muted">Create a fresh exam mirrored from the original sample final.</p><button class="primary" onclick="startGenerated()">Generate test</button></section>`;
+    return `<section class="panel stack"><h2 class="page-title">Generate New Test</h2><p class="muted">Create a fresh exam mirrored from the original sample final.</p><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
   }
   const q = questions[run.index];
   const attempts = run.attempts[q.id] || 0;
   const solved = run.solved[q.id] === true;
+  const wrongPicks = run.wrong[q.id] || [];
   const correctCount = questions.filter(item => run.solved[item.id]).length;
+  const filterRow = kind === "sample" ? `
+    <div class="filter-row">
+      <label class="filter-label" for="chapterFilter">Focus</label>
+      <select id="chapterFilter" class="chapter-select" onchange="setSampleFilter(this.value)">
+        <option value="" ${!state.sampleFilter ? "selected" : ""}>Full sample final (${sampleQuestions.length} questions)</option>
+        ${["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"].map(ch => {
+          const n = sampleQuestions.filter(x => x.source.includes(ch)).length;
+          return `<option value="${ch}" ${state.sampleFilter === ch ? "selected" : ""}>${ch} drill (${n})</option>`;
+        }).join("")}
+      </select>
+    </div>` : "";
   return `
     <section class="stack">
+      ${filterRow}
       <div class="question-meta">
         <span class="badge">${kind === "sample" ? "Original Sample Final" : "Generated Practice"} · Question ${run.index + 1} of ${questions.length}</span>
         <span>Score ${correctCount}/${questions.length} · Attempts on this question ${attempts}</span>
       </div>
-      <article class="question-panel">
+      <article class="question-panel" aria-labelledby="questionHeading">
+        <h2 id="questionHeading" class="visually-hidden">Question ${run.index + 1}</h2>
         <div class="question-meta"><span>${q.source}</span><span>${q.type}</span></div>
-        <p class="question-text">${q.prompt}</p>
-        <div class="choices" role="group" aria-label="Answer choices">
-          ${q.choices.map((choice, i) => `<button class="choice ${solved && i === q.answer ? "correct" : ""}" onclick="chooseAnswer('${kind}', ${i})">${String.fromCharCode(97 + i)}. ${choice}</button>`).join("")}
+        <p class="question-text" id="qtext-${q.id}">${q.prompt}</p>
+        <div class="choices" role="group" aria-label="Answer choices for this question" aria-labelledby="qtext-${q.id}">
+          ${q.choices.map((choice, i) => {
+            const letter = String.fromCharCode(97 + i);
+            const isCorrect = solved && i === q.answer;
+            const isWrong = !solved && wrongPicks.includes(i);
+            const cls = ["choice", isCorrect ? "correct" : "", isWrong ? "wrong" : ""].filter(Boolean).join(" ");
+            return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
+          }).join("")}
         </div>
-        ${solved ? `<div class="solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<p>${q.solution}</p><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect attempts stay open. Keep working until the correct answer clicks into place.</p>`}
+        ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
       </article>
       <div class="action-row">
-        <button class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
-        <button class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
-        <button class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
+        <button type="button" class="secondary" onclick="moveQuestion('${kind}', -1)">Back</button>
+        <button type="button" class="primary" onclick="moveQuestion('${kind}', 1)">Next</button>
+        <button type="button" class="secondary" onclick="resetQuiz('${kind}')">Reset this test</button>
       </div>
     </section>`;
 }
 
 function chooseAnswer(kind, index) {
-  const questions = kind === "sample" ? sampleQuestions : state.generated;
+  const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   const q = questions[run.index];
   run.attempts[q.id] = (run.attempts[q.id] || 0) + 1;
   if (index === q.answer) {
     run.solved[q.id] = true;
+    delete run.wrong[q.id];
   } else {
-    setTimeout(() => {
-      const buttons = [...document.querySelectorAll(".choice")];
-      buttons[index]?.classList.add("wrong");
-    }, 0);
+    const prev = run.wrong[q.id] || [];
+    if (!prev.includes(index)) run.wrong[q.id] = [...prev, index];
   }
   saveState();
   render();
 }
 
 function moveQuestion(kind, delta) {
-  const questions = kind === "sample" ? sampleQuestions : state.generated;
+  const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   run.index = Math.max(0, Math.min(questions.length - 1, run.index + delta));
   saveState();
@@ -406,15 +464,15 @@ function moveQuestion(kind, delta) {
 }
 
 function resetQuiz(kind) {
-  if (kind === "sample") state.sample = { index: 0, attempts: {}, solved: {} };
-  else state.generatedRun = { index: 0, attempts: {}, solved: {} };
+  if (kind === "sample") state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  else state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
   saveState();
   render();
 }
 
 function startGenerated() {
   state.generated = generateTest();
-  state.generatedRun = { index: 0, attempts: {}, solved: {} };
+  state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
   saveState();
   routeTo("generate");
 }
@@ -428,8 +486,8 @@ function renderHome() {
         <h2>Practice the final like it talks back.</h2>
         <p class="muted">This site turns the FIN 295 Chapters 7-11 materials, formula sheet, and sample final into an interactive study system. Choose an answer, keep trying if it is wrong, and unlock the worked solution only when you land on the correct choice.</p>
         <div class="action-row">
-          <button class="primary" onclick="routeTo('sample')">Start sample test</button>
-          <button class="secondary" onclick="startGenerated()">Generate practice test</button>
+          <button type="button" class="primary" onclick="routeTo('sample')">Start sample test</button>
+          <button type="button" class="secondary" onclick="startGenerated()">Generate practice test</button>
         </div>
       </div>
       <div class="panel stack">
@@ -493,7 +551,7 @@ function renderTools() {
           <div class="tvm-values" id="tvmValues"></div>
           <div id="calcDisplay" class="calc-display" aria-live="polite">0</div>
           <div class="calc-grid" aria-label="Calculator buttons">
-            ${["N","I/Y","PV","PMT","FV","CPT","CE/C","2nd CLR TVM","+/-","÷","7","8","9","×","-","4","5","6","+","=","1","2","3","0","."].map(k => `<button class="${["N","I/Y","PV","PMT","FV","CPT"].includes(k) ? "accent" : ""}" onclick="calcPress('${k.replace("'", "\\'")}')">${k}</button>`).join("")}
+            ${["N","I/Y","PV","PMT","FV","CPT","CE/C","2nd CLR TVM","+/-","÷","7","8","9","×","-","4","5","6","+","=","1","2","3","0","."].map(k => `<button type="button" class="${["N","I/Y","PV","PMT","FV","CPT"].includes(k) ? "accent" : ""}" onclick="calcPress('${k.replace("'", "\\'")}')">${k}</button>`).join("")}
           </div>
           <p class="muted">Enter a number, press a TVM key to store it, then press CPT and the missing TVM key. Use negative PV for investments/outflows.</p>
         </article>
@@ -505,8 +563,8 @@ function renderTools() {
             <label>Break minutes<input id="breakLen" type="number" min="1" max="60" value="${state.timer.break}" onchange="setTimerPref('break', this.value)"></label>
           </div>
           <div class="action-row" style="margin-top:.8rem">
-            <button class="primary" onclick="toggleTimer()">Start/Pause</button>
-            <button class="secondary" onclick="resetTimer()">Reset</button>
+            <button type="button" class="primary" onclick="toggleTimer()">Start/Pause</button>
+            <button type="button" class="secondary" onclick="resetTimer()">Reset</button>
           </div>
           <p id="timerCue" class="muted" aria-live="polite">Ready for a focused study interval.</p>
         </article>
@@ -514,8 +572,18 @@ function renderTools() {
       <div class="grid">
         <article class="tool-panel">
           <h3>Flashcards</h3>
-          <button class="flashcard" onclick="flipFlash()">${state.flashBack ? f[1] : f[0]}</button>
-          <div class="action-row" style="margin-top:.8rem"><button class="secondary" onclick="nextFlash()">Next card</button></div>
+          <button type="button" class="flashcard" onclick="flipFlash()">${state.flashBack ? f[1] : f[0]}</button>
+          <div class="action-row" style="margin-top:.8rem"><button type="button" class="secondary" onclick="nextFlash()">Next card</button></div>
+        </article>
+        <article class="tool-panel">
+          <h3>Chapter drills</h3>
+          <p class="muted">Jump to the sample final filtered by the slides your professor emphasized.</p>
+          <div class="chapter-drills">
+            ${["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"].map(ch => {
+              const n = sampleQuestions.filter(q => q.source.includes(ch)).length;
+              return `<button type="button" class="secondary chapter-pill" onclick="startChapterPractice('${ch}')">${ch} · ${n}</button>`;
+            }).join("")}
+          </div>
         </article>
         <article class="tool-panel">
           <h3>Progress Dashboard</h3>
@@ -663,10 +731,13 @@ function nextFlash() {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadState();
+  const themeToggle = document.getElementById("themeToggle");
+  themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
   document.querySelectorAll(".nav-link").forEach(b => b.addEventListener("click", () => routeTo(b.dataset.route)));
-  document.getElementById("themeToggle").addEventListener("click", () => {
+  themeToggle.addEventListener("click", () => {
     state.dark = !state.dark;
     document.body.classList.toggle("dark", state.dark);
+    themeToggle.setAttribute("aria-pressed", state.dark ? "true" : "false");
     saveState();
   });
   render();
