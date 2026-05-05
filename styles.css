@@ -953,7 +953,7 @@ body.dark .primary {
   color: var(--brand-2);
   font-size: 1rem;
   line-height: 1;
-  transition: transform 0.28s ease-out, background 0.28s ease-out;
+  transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), background 0.34s ease-out;
 }
 
 .formula-chapter.open .formula-chevron {
@@ -974,12 +974,12 @@ body.dark .primary {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transform: scaleY(0.985);
+  transform: scaleY(0.995);
   transform-origin: top;
   transition:
-    grid-template-rows 320ms ease-out,
-    opacity 240ms ease-out,
-    transform 320ms ease-out;
+    grid-template-rows 340ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 300ms ease-out,
+    transform 340ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .formula-chapter.open .formula-chapter-panel {
@@ -992,7 +992,7 @@ body.dark .primary {
   min-height: 0;
   overflow: hidden;
   padding: 0 1rem;
-  transition: padding-bottom 320ms ease-out;
+  transition: padding-bottom 340ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .formula-chapter.open .formula-chapter-inner {
@@ -1001,11 +1001,11 @@ body.dark .primary {
 
 .formula-chapter-panel .formula-card {
   opacity: 0;
-  transform: translateY(8px) scale(0.985);
+  transform: translateX(-14px) scale(0.99);
   animation: none;
   transition:
-    opacity 220ms ease-out,
-    transform 280ms ease-out;
+    opacity 320ms ease-out,
+    transform 340ms cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: 0ms;
 }
 

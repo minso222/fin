@@ -536,7 +536,8 @@ const state = {
   sampleFilter: null,
   sample: { index: 0, attempts: {}, solved: {}, wrong: {} },
   generated: null,
-  generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {} },
+  generatedCount: 22,
+  generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} },
   timer: { ...timerDefaults },
   flashIndex: 0,
   flashOrder: [],
@@ -570,9 +571,11 @@ function loadState() {
   }
   if (!state.sample.wrong) state.sample.wrong = {};
   if (!state.generatedRun || typeof state.generatedRun.index !== "number") {
-    state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
+    state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   }
   if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
+  if (!state.generatedRun.first) state.generatedRun.first = {};
+  state.generatedCount = Math.max(5, Math.min(40, Number(state.generatedCount) || 22));
   if (state.sampleFilter === undefined) state.sampleFilter = null;
   if (!Array.isArray(state.flashOrder) || state.flashOrder.length !== flashcards.length) {
     state.flashOrder = flashcards.map((_, i) => i);
@@ -592,6 +595,7 @@ function saveState() {
     sampleFilter: state.sampleFilter,
     sample: state.sample,
     generated: state.generated,
+    generatedCount: state.generatedCount,
     generatedRun: state.generatedRun,
     timer: state.timer,
     flashIndex: state.flashIndex,
@@ -646,6 +650,10 @@ function choiceSet(correct, formatter, spreads = [-0.18, -0.09, 0.12, 0.22]) {
 function makeQ(id, type, source, formulaIds, prompt, correct, formatter, solution, spreads) {
   const made = choiceSet(correct, formatter, spreads);
   return { id, type, source, formulaIds, prompt, choices: made.choices, answer: made.answer, solution };
+}
+
+function makeConceptQ(id, type, source, formulaIds, prompt, choices, answer, solution) {
+  return { id, type, source, formulaIds, prompt, choices, answer, solution };
 }
 
 function generateTest() {
@@ -706,7 +714,36 @@ function generateTest() {
     { ...sampleQuestions[12], id: "g13" }, { ...sampleQuestions[13], id: "g14" }, { ...sampleQuestions[17], id: "g18" },
     { ...sampleQuestions[18], id: "g19" }, { ...sampleQuestions[21], id: "g22" }
   ];
-  return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7]];
+
+  const commonEquity = 4200000, shares = 400000, marketPrice = 24.75;
+  const bookValue = commonEquity / shares;
+  const q23 = makeQ("g23", "midterm-market-book", "Midterm sample test Q4", ["mb"], `A firm has total common equity of ${money(commonEquity)} and ${shares.toLocaleString()} shares outstanding. If the stock sells for ${money(marketPrice)} per share, by how much do market value and book value per share differ?`, marketPrice - bookValue, money, `Book value per share is ${money(commonEquity)}/${shares.toLocaleString()}=${money(bookValue)}. Difference = ${money(marketPrice)} - ${money(bookValue)} = ${money(marketPrice - bookValue)}.`);
+
+  const mvaShares = 3, mvaPrice = 16, mvaBook = 9100000;
+  const q24 = makeQ("g24", "midterm-mva", "Midterm sample test Q5", ["mva"], `A company has ${mvaShares} million common shares outstanding selling for ${money(mvaPrice)} each. If common equity on the balance sheet is ${money(mvaBook)}, what is MVA?`, mvaShares * 1000000 * mvaPrice - mvaBook, money, `MVA = market value of equity - book value = ${mvaShares} million x ${money(mvaPrice)} - ${money(mvaBook)}.`);
+
+  const evaEbit = 1420000, evaTax = 0.24, evaCapital = 9200000, evaCost = 0.095;
+  const eva = evaEbit * (1 - evaTax) - evaCapital * evaCost;
+  const q25 = makeQ("g25", "midterm-eva", "Midterm sample test Q6", ["eva"], `A company reports EBIT of ${money(evaEbit)}, tax rate ${pct(evaTax * 100)}, total invested capital of ${money(evaCapital)}, and after-tax cost of capital of ${pct(evaCost * 100)}. What is EVA?`, eva, money, `EVA = EBIT(1-T) - invested capital × cost of capital = ${money(eva)}.`);
+
+  const roeNi = 84000, roeEquity = 480000;
+  const q26 = makeQ("g26", "midterm-roe", "Midterm sample test Q10", ["roe-basic"], `A firm's total common equity was ${money(roeEquity)} and net income was ${money(roeNi)}. What was ROE?`, roeNi / roeEquity * 100, pct, `ROE = Net Income / Total Equity = ${money(roeNi)} / ${money(roeEquity)} = ${pct(roeNi / roeEquity * 100)}.`);
+
+  const annuityN = 8, annuityPmt = 6200, annuityRate = 0.052;
+  const q27 = makeQ("g27", "midterm-pv-annuity", "Midterm sample test Q14", ["pv"], `What is the present value of an ordinary annuity with ${annuityN} payments of ${money(annuityPmt)} if the appropriate interest rate is ${pct(annuityRate * 100)}?`, pvAnnuity(annuityRate, annuityN, annuityPmt), money, `Discount the ordinary annuity payments at ${pct(annuityRate * 100)} for ${annuityN} periods.`);
+
+  const perpPmt = 95, perpPrice = 1760;
+  const q28 = makeQ("g28", "midterm-perpetuity", "Midterm sample test Q15", [], `What rate of return would you earn if you paid ${money(perpPrice)} for a perpetuity that pays ${money(perpPmt)} per year?`, perpPmt / perpPrice * 100, pct, `Perpetuity return = payment / price = ${money(perpPmt)} / ${money(perpPrice)}.`);
+
+  const pvRate = 0.128, stream = [650, 1850, 2900, 4100];
+  const streamPv = npv(pvRate, stream);
+  const q29 = makeQ("g29", "midterm-cash-flow-pv", "Midterm sample test Q16", ["pv"], `What is the present value of cash flows Year 0 = ${money(stream[0])}, Year 1 = ${money(stream[1])}, Year 2 = ${money(stream[2])}, and Year 3 = ${money(stream[3])} at ${pct(pvRate * 100)}?`, streamPv, money, `Discount each cash flow at ${pct(pvRate * 100)} and sum the present values.`);
+
+  const q30 = makeConceptQ("g30", "midterm-concept", "Midterm sample test Q1-Q3", [], "Which item is NOT normally considered a current asset?", ["Inventory.", "Cash.", "Bonds.", "Accounts receivable.", "Short-term marketable securities."], 2, "Bonds are generally long-term financial assets, while the other listed items are normally current assets.");
+  const q31 = makeConceptQ("g31", "midterm-concept", "Midterm sample test Q2", [], "Money markets are markets for:", ["Long-term bonds.", "Short-term debt securities such as Treasury bills and commercial paper.", "Common stocks.", "Consumer automobile loans.", "Foreign currencies."], 1, "Money markets trade short-term debt securities.");
+  const q32 = makeConceptQ("g32", "midterm-concept", "Midterm sample test Q7", ["current-ratio"], "Considered alone, which action would increase a company's current ratio?", ["An increase in notes payable.", "An increase in accounts payable.", "An increase in accounts receivable.", "An increase in accrued liabilities.", "An increase in net fixed assets."], 2, "Accounts receivable increases current assets, which can raise current ratio if current liabilities are unchanged.");
+
+  return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7], q23, q24, q25, q26, q27, q28, q29, q30, q31, q32];
 }
 
 function getQuestionsForKind(kind) {
@@ -846,13 +883,18 @@ function renderQuiz(kind) {
   const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   if (!questions) {
-    return `<section class="panel stack"><h2 class="page-title">Generate New Test</h2><p class="muted">Create a fresh exam mirrored from the original sample final.</p><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
+    return `<section class="panel stack"><h2 class="page-title">Generate New Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><label class="filter-label" for="generatedCountEmpty">Questions</label><select id="generatedCountEmpty" class="chapter-select" onchange="setGeneratedCount(this.value)">${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}</select></div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
   }
   const q = questions[run.index];
   const attempts = run.attempts[q.id] || 0;
   const solved = run.solved[q.id] === true;
   const wrongPicks = run.wrong[q.id] || [];
   const correctCount = questions.filter(item => run.solved[item.id]).length;
+  const firstAnswers = run.first || {};
+  const firstTotal = Object.keys(firstAnswers).length;
+  const firstCorrect = Object.values(firstAnswers).filter(Boolean).length;
+  const firstAccuracy = firstTotal ? `${firstCorrect}/${firstTotal} (${pct(firstCorrect / firstTotal * 100)})` : "0/0";
+  const firstAccuracyRow = kind === "generated" ? `<div class="question-meta"><span>First-try accuracy ${firstAccuracy}</span></div>` : "";
   const formulaOpen = !!state.quizFormulaOpen;
   const filterRow = kind === "sample" ? `
     <div class="filter-row">
@@ -864,6 +906,13 @@ function renderQuiz(kind) {
           return `<option value="${ch}" ${state.sampleFilter === ch ? "selected" : ""}>${ch} drill (${n})</option>`;
         }).join("")}
       </select>
+    </div>` : kind === "generated" ? `
+    <div class="filter-row">
+      <label class="filter-label" for="generatedCount">Questions</label>
+      <select id="generatedCount" class="chapter-select" onchange="setGeneratedCount(this.value)">
+        ${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}
+      </select>
+      <button type="button" class="secondary" onclick="startGenerated()">Generate set</button>
     </div>` : "";
   return `
     <section class="stack">
@@ -872,6 +921,7 @@ function renderQuiz(kind) {
         <span class="badge">${kind === "sample" ? "Original Sample Final" : "Generated Practice"} · Question ${run.index + 1} of ${questions.length}</span>
         <span>Score ${correctCount}/${questions.length} · Attempts on this question ${attempts}</span>
       </div>
+      ${firstAccuracyRow}
       <div class="action-row">
         <button type="button" class="secondary" onclick="toggleQuizFormulaSheet()" aria-expanded="${formulaOpen}">${formulaOpen ? "Close Formula Sheet" : "Open Formula Sheet"}</button>
       </div>
@@ -909,6 +959,8 @@ function chooseAnswer(kind, index) {
   const run = kind === "sample" ? state.sample : state.generatedRun;
   const q = questions[run.index];
   run.attempts[q.id] = (run.attempts[q.id] || 0) + 1;
+  if (!run.first) run.first = {};
+  if (!(q.id in run.first)) run.first[q.id] = index === q.answer;
   if (index === q.answer) {
     run.solved[q.id] = true;
     delete run.wrong[q.id];
@@ -930,14 +982,19 @@ function moveQuestion(kind, delta) {
 
 function resetQuiz(kind) {
   if (kind === "sample") state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
-  else state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  else state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   saveState();
   render();
 }
 
+function setGeneratedCount(value) {
+  state.generatedCount = Math.max(5, Math.min(40, Number(value) || 22));
+  saveState();
+}
+
 function startGenerated() {
-  state.generated = shuffle(generateTest());
-  state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {} };
+  state.generated = shuffle(generateTest()).slice(0, state.generatedCount);
+  state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   saveState();
   routeTo("generate");
 }
@@ -990,7 +1047,7 @@ function renderFormulas() {
                 <div class="formula-chapter-inner">
                   <div class="grid">
                     ${items.map((f, index) => `
-                      <article id="formula-${f.id}" class="formula-card" style="--stagger:${index * 45}ms">
+                      <article id="formula-${f.id}" class="formula-card" style="--stagger:${index * 60}ms">
                         <span class="badge">${f.source}</span>
                         <h3>${f.title}</h3>
                         <div class="formula">\\(${f.tex}\\)</div>
