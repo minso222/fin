@@ -1,6 +1,7 @@
 const STORE = "fin295-study-state-v1";
 const FORMULA_PDF = "assets/fin-295-final-formula.pdf";
 const GA_MEASUREMENT_ID = "G-9QBNY7JDGE";
+const COOKIE_CONSENT_NAME = "fin295_cookie_consent";
 const pageTitles = {
   home: "Home",
   sample: "Sample Test",
@@ -807,7 +808,49 @@ function routeTo(route, options = {}) {
   trackPageView();
 }
 
+function getCookie(name) {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith(`${name}=`))
+    ?.split("=")[1] || "";
+}
+
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+function getCookieConsent() {
+  const value = getCookie(COOKIE_CONSENT_NAME);
+  return value === "accepted" || value === "declined" ? value : "";
+}
+
+function setGoogleAnalyticsConsent(consent) {
+  if (typeof window.gtag !== "function") return;
+  const granted = consent === "accepted";
+  window.gtag("consent", "update", {
+    analytics_storage: granted ? "granted" : "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied"
+  });
+}
+
+function acceptCookies() {
+  setCookie(COOKIE_CONSENT_NAME, "accepted", 180);
+  setGoogleAnalyticsConsent("accepted");
+  render();
+  trackPageView();
+}
+
+function declineCookies() {
+  setCookie(COOKIE_CONSENT_NAME, "declined", 180);
+  setGoogleAnalyticsConsent("declined");
+  render();
+}
+
 function trackPageView() {
+  if (getCookieConsent() !== "accepted") return;
   if (typeof window.gtag !== "function") return;
   const route = state.route || "home";
   const pageTitle = pageTitles[route] || "FIN 295 Final Study Studio";
@@ -1233,9 +1276,25 @@ function renderCitationSection() {
     <footer class="site-footer" aria-labelledby="citationHeading">
       <div class="citation-section">
         <p id="citationHeading" class="eyebrow">Attribution</p>
-        <p>Website content, concepts, formulas, and educational material are based on <cite>Fundamentals of Financial Management, 16th Edition</cite> by Eugene F. Brigham and Joel F. Houston, along with course materials, PowerPoints, and notes created by Dr. Xiaofeng Wang.</p>
+        <p>Website content, concepts, formulas, and educational material are based on <cite>Fundamentals of Financial Management, 16th Edition</cite> by Eugene F. Brigham and Joel F. Houston.</p>
+        <p>Course materials, PowerPoints, and notes created by Dr. Xiaofeng Wang.</p>
       </div>
     </footer>`;
+}
+
+function renderCookieConsent() {
+  if (getCookieConsent()) return "";
+  return `
+    <div class="cookie-consent" role="dialog" aria-live="polite" aria-labelledby="cookieConsentHeading" aria-describedby="cookieConsentCopy">
+      <div>
+        <h2 id="cookieConsentHeading">This site uses cookies</h2>
+        <p id="cookieConsentCopy">I use Google Analytics to understand how visitors use this site. No personal data is sold or shared.</p>
+      </div>
+      <div class="cookie-actions">
+        <button type="button" class="secondary" onclick="declineCookies()">Decline</button>
+        <button type="button" class="primary" onclick="acceptCookies()">Accept</button>
+      </div>
+    </div>`;
 }
 
 function renderContactSection() {
@@ -1281,7 +1340,7 @@ function render() {
     formulas: renderFormulas,
     tools: renderTools
   }[state.route]();
-  app.innerHTML = `${page}${renderContactSection()}${renderCitationSection()}`;
+  app.innerHTML = `${page}${renderContactSection()}${renderCitationSection()}${renderCookieConsent()}`;
   if (state.route === "tools") {
     syncCalc();
     syncTimer();
@@ -1626,6 +1685,7 @@ document.addEventListener("DOMContentLoaded", () => {
   mobileThemeToggle?.addEventListener("click", toggleTheme);
   document.getElementById("mobileMenuToggle")?.addEventListener("click", toggleMobileMenu);
   setTheme(state.dark);
+  setGoogleAnalyticsConsent(getCookieConsent());
   syncNavigation();
   syncMobileMenu();
   window.addEventListener("resize", () => renderFloatingTimer());
