@@ -907,17 +907,134 @@ body.page-transition .choice:nth-child(5) {
 }
 .chapter-select {
   flex: 1;
+  width: 100%;
   min-width: min(100%, 280px);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 0.6rem 0.75rem;
-  background: var(--input-bg);
+  padding: 0.72rem 2.6rem 0.72rem 0.85rem;
+  appearance: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
   color: var(--text);
   pointer-events: auto;
+  font-weight: 750;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
-.chapter-select:focus-visible {
+body.dark .chapter-select {
+  background: linear-gradient(180deg, rgba(7, 12, 22, 0.92), rgba(2, 5, 10, 0.78));
+}
+.chapter-select option {
+  background: var(--panel-solid);
+  color: var(--text);
+}
+.select-shell {
+  position: relative;
+  flex: 1;
+  min-width: min(100%, 280px);
+  display: inline-grid;
+}
+.select-shell::after {
+  content: "";
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--brand-2);
+  border-bottom: 2px solid var(--brand-2);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+.search-input {
+  flex: 1;
+  min-width: min(100%, 280px);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.72rem 0.85rem;
+  background: var(--input-bg);
+  color: var(--text);
+  font-weight: 650;
+}
+.chapter-select:focus-visible,
+.search-input:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+.custom-select {
+  flex: 1;
+  min-width: min(100%, 280px);
+  position: relative;
+}
+.custom-select summary {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.72rem 0.85rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58));
+  color: var(--text);
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+body.dark .custom-select summary {
+  background: linear-gradient(180deg, rgba(7, 12, 22, 0.92), rgba(2, 5, 10, 0.78));
+}
+.custom-select summary::-webkit-details-marker {
+  display: none;
+}
+.custom-select summary::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--brand-2);
+  border-bottom: 2px solid var(--brand-2);
+  transform: translateY(-20%) rotate(45deg);
+  transition: transform 0.18s ease;
+}
+.custom-select[open] summary {
+  border-color: rgba(107, 149, 255, 0.55);
+  box-shadow: var(--glow-brand);
+}
+.custom-select[open] summary::after {
+  transform: translateY(20%) rotate(225deg);
+}
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 0.2rem;
+  max-height: min(320px, 56vh);
+  overflow: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-solid);
+  box-shadow: var(--shadow);
+}
+.custom-select-menu button {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.62rem 0.75rem;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-weight: 750;
+}
+.custom-select-menu button:hover,
+.custom-select-menu button.selected {
+  border-color: rgba(107, 149, 255, 0.35);
+  background: rgba(107, 149, 255, 0.12);
+}
+.formula-search-row {
+  align-items: stretch;
 }
 .chapter-drills {
   display: flex;
@@ -1202,6 +1319,107 @@ body.page-transition .contact-action:nth-child(3) {
   -webkit-user-select: none;
 }
 
+.formula-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.performance-dashboard,
+.review-queue {
+  margin-top: 1rem;
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+}
+
+.performance-dashboard h2,
+.review-queue h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.dashboard-grid h3 {
+  margin: 0 0 0.65rem;
+}
+
+.dashboard-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.58rem 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.dashboard-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 750;
+}
+
+.dashboard-row small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.mini-meter {
+  grid-column: 1 / -1;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(107, 149, 255, 0.12);
+  border: 1px solid var(--line-soft);
+}
+
+.mini-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand) 0%, #74d0ff 100%);
+}
+
+.review-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.review-item {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  background: var(--button-soft);
+  color: var(--text);
+  text-align: left;
+}
+
+.review-item span {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.review-item small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.review-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(107, 149, 255, 0.35);
+  background: rgba(107, 149, 255, 0.12);
+}
+
 .citation-section .eyebrow {
   text-align: center;
 }
@@ -1375,13 +1593,8 @@ body.page-transition .contact-action:nth-child(3) {
   gap: 0.25rem;
 }
 
-.alarm-row select {
+.alarm-row .select-shell {
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 0.65rem;
-  background: var(--input-bg);
-  color: var(--text);
 }
 
 .mini-copy {
@@ -1611,6 +1824,15 @@ body.page-transition .contact-action:nth-child(3) {
   .cookie-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dashboard-row small {
+    grid-column: 1 / -1;
   }
 }
 

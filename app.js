@@ -629,6 +629,9 @@ const state = {
   flashOrder: [],
   flashBack: false,
   formulaOpen: {},
+  formulaSearch: "",
+  bookmarkedFormulas: {},
+  weakQuestions: {},
   quizFormulaOpen: false,
   formulaReturn: null,
   contactRevealed: {},
@@ -669,6 +672,9 @@ function loadState() {
     state.flashOrder = flashcards.map((_, i) => i);
   }
   if (!state.formulaOpen || typeof state.formulaOpen !== "object") state.formulaOpen = {};
+  if (typeof state.formulaSearch !== "string") state.formulaSearch = "";
+  if (!state.bookmarkedFormulas || typeof state.bookmarkedFormulas !== "object") state.bookmarkedFormulas = {};
+  if (!state.weakQuestions || typeof state.weakQuestions !== "object") state.weakQuestions = {};
   state.quizFormulaOpen = !!state.quizFormulaOpen;
   if (!["sample", "generated"].includes(state.formulaReturn)) state.formulaReturn = null;
   if (!state.contactRevealed || typeof state.contactRevealed !== "object") state.contactRevealed = {};
@@ -690,6 +696,9 @@ function saveState() {
     flashIndex: state.flashIndex,
     flashOrder: state.flashOrder,
     formulaOpen: state.formulaOpen,
+    formulaSearch: state.formulaSearch,
+    bookmarkedFormulas: state.bookmarkedFormulas,
+    weakQuestions: state.weakQuestions,
     quizFormulaOpen: state.quizFormulaOpen,
     formulaReturn: state.formulaReturn,
     contactRevealed: state.contactRevealed
@@ -854,6 +863,32 @@ function getQuestionsForKind(kind) {
   return sampleQuestions;
 }
 
+function allKnownQuestions() {
+  const generated = Array.isArray(state.generated) ? state.generated : [];
+  return [...sampleQuestions, ...generated];
+}
+
+function questionChapter(question) {
+  const match = question?.source?.match(/Chapter\s+\d+/);
+  return match ? match[0] : "Mixed Review";
+}
+
+function questionLabel(question) {
+  if (!question) return "Question";
+  const text = question.prompt.replace(/\s+/g, " ").trim();
+  return text.length > 96 ? `${text.slice(0, 96)}...` : text;
+}
+
+function normalizeQuestionType(type) {
+  return String(type || "Concept").split("-").map(part => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ");
+}
+
+function typeMatchesQuestion(candidate, question) {
+  if (candidate.type === question.type) return true;
+  const overlap = candidate.formulaIds?.some(id => question.formulaIds?.includes(id));
+  return !!overlap;
+}
+
 function setSampleFilter(value) {
   state.sampleFilter = value || null;
   state.sample = { index: 0, attempts: {}, solved: {}, wrong: {} };
@@ -997,6 +1032,16 @@ function formulaLinks(ids, returnKind = null) {
   }).join(" ")}</p>`;
 }
 
+function renderCustomSelect(id, selectedLabel, options) {
+  return `
+    <details class="custom-select" id="${id}">
+      <summary><span>${selectedLabel}</span></summary>
+      <div class="custom-select-menu">
+        ${options.map(option => `<button type="button" class="${option.selected ? "selected" : ""}" onclick="${option.action}">${option.label}</button>`).join("")}
+      </div>
+    </details>`;
+}
+
 function goToFormulaFromQuiz(id, returnKind) {
   state.formulaReturn = returnKind || null;
   routeTo("formulas", { keepFormulaReturn: true });
@@ -1010,12 +1055,45 @@ function backToFormulaReturn() {
 }
 
 function formulasByChapter() {
+  const query = state.formulaSearch.trim().toLowerCase();
   const grouped = formulas.reduce((acc, formula) => {
+    const searchable = [formula.chapter, formula.source, formula.title, formula.plain, formula.variables, formula.when, formula.example, formula.tex].join(" ").toLowerCase();
+    if (query && !searchable.includes(query)) return acc;
     if (!acc[formula.chapter]) acc[formula.chapter] = [];
     acc[formula.chapter].push(formula);
     return acc;
   }, {});
   return formulaChapterOrder.filter(ch => grouped[ch]).map(ch => [ch, grouped[ch]]);
+}
+
+function setFormulaSearch(value) {
+  state.formulaSearch = value || "";
+  saveState();
+  render();
+  setTimeout(() => {
+    const input = document.getElementById("formulaSearch");
+    if (!input) return;
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, 0);
+}
+
+function clearFormulaSearch() {
+  state.formulaSearch = "";
+  saveState();
+  render();
+}
+
+function toggleFormulaBookmark(id) {
+  if (state.bookmarkedFormulas[id]) delete state.bookmarkedFormulas[id];
+  else state.bookmarkedFormulas[id] = true;
+  saveState();
+  render();
+}
+
+function goToBookmarkedFormula(id) {
+  routeTo("formulas");
+  setTimeout(() => openFormulaFor(id), 40);
 }
 
 function toggleFormulaChapter(chapter) {
@@ -1063,9 +1141,12 @@ function renderQuiz(kind) {
   const questions = getQuestionsForKind(kind);
   const run = kind === "sample" ? state.sample : state.generatedRun;
   if (!questions) {
-    return `<section class="panel stack"><h2 class="page-title">Practice Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><label class="filter-label" for="generatedCountEmpty">Questions</label><select id="generatedCountEmpty" class="chapter-select" onchange="setGeneratedCount(this.value)">${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}</select></div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
+    const countOptions = [5, 10, 15, 20, 25, 30, 32].map(n => ({ label: `${n} questions`, value: String(n) }));
+    const activeCount = countOptions.find(option => Number(option.value) === state.generatedCount) || countOptions[3];
+    return `<section class="panel stack"><h2 class="page-title">Practice Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><span class="filter-label">Questions</span>${renderCustomSelect("generatedCountEmpty", activeCount.label, countOptions.map(option => ({ ...option, selected: Number(option.value) === state.generatedCount, action: `setGeneratedCount('${option.value}')` })))}</div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
   }
   const q = questions[run.index];
+  const weak = !!state.weakQuestions[q.id];
   const attempts = run.attempts[q.id] || 0;
   const solved = run.solved[q.id] === true;
   const wrongPicks = run.wrong[q.id] || [];
@@ -1083,22 +1164,35 @@ function renderQuiz(kind) {
       </div>
     </div>` : "";
   const formulaOpen = !!state.quizFormulaOpen;
+  const sampleFilterOptions = [
+    { label: `Full sample final (${sampleQuestions.length} questions)`, value: "" },
+    ...["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"].map(ch => ({
+      label: `${ch} drill (${sampleQuestions.filter(x => x.source.includes(ch)).length})`,
+      value: ch
+    }))
+  ];
+  const activeSampleFilter = sampleFilterOptions.find(option => option.value === (state.sampleFilter || "")) || sampleFilterOptions[0];
+  const countOptions = [5, 10, 15, 20, 25, 30, 32].map(n => ({
+    label: `${n} questions`,
+    value: String(n)
+  }));
+  const activeCount = countOptions.find(option => Number(option.value) === state.generatedCount) || countOptions[3];
   const filterRow = kind === "sample" ? `
     <div class="filter-row">
-      <label class="filter-label" for="chapterFilter">Focus</label>
-      <select id="chapterFilter" class="chapter-select" onchange="setSampleFilter(this.value)">
-        <option value="" ${!state.sampleFilter ? "selected" : ""}>Full sample final (${sampleQuestions.length} questions)</option>
-        ${["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"].map(ch => {
-          const n = sampleQuestions.filter(x => x.source.includes(ch)).length;
-          return `<option value="${ch}" ${state.sampleFilter === ch ? "selected" : ""}>${ch} drill (${n})</option>`;
-        }).join("")}
-      </select>
+      <span class="filter-label">Focus</span>
+      ${renderCustomSelect("chapterFilter", activeSampleFilter.label, sampleFilterOptions.map(option => ({
+        ...option,
+        selected: option.value === (state.sampleFilter || ""),
+        action: `setSampleFilter('${option.value}')`
+      })))}
     </div>` : kind === "generated" ? `
     <div class="filter-row">
-      <label class="filter-label" for="generatedCount">Questions</label>
-      <select id="generatedCount" class="chapter-select" onchange="setGeneratedCount(this.value)">
-        ${[5, 10, 15, 20, 25, 30, 32].map(n => `<option value="${n}" ${state.generatedCount === n ? "selected" : ""}>${n} questions</option>`).join("")}
-      </select>
+      <span class="filter-label">Questions</span>
+      ${renderCustomSelect("generatedCount", activeCount.label, countOptions.map(option => ({
+        ...option,
+        selected: Number(option.value) === state.generatedCount,
+        action: `setGeneratedCount('${option.value}')`
+      })))}
       <button type="button" class="secondary" onclick="startGenerated()">Generate set</button>
     </div>` : "";
   return `
@@ -1116,7 +1210,7 @@ function renderQuiz(kind) {
         <div class="quiz-main">
           <article class="question-panel" aria-labelledby="questionHeading">
             <h2 id="questionHeading" class="visually-hidden">Question ${run.index + 1}</h2>
-            <div class="question-meta"><span>${q.source}</span><span>${q.type}</span></div>
+            <div class="question-meta"><span>${q.source}</span><span>${q.type}</span>${weak ? `<span class="badge">Review Queue</span>` : ""}</div>
             <p class="question-text" id="qtext-${q.id}">${q.prompt}</p>
             <div class="choices" role="group" aria-label="Answer choices for this question" aria-labelledby="qtext-${q.id}">
               ${q.choices.map((choice, i) => {
@@ -1127,7 +1221,7 @@ function renderQuiz(kind) {
                 return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
               }).join("")}
             </div>
-            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds, kind)}<div class="solution-body"><p>${q.solution}</p></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
+            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds, kind)}<div class="solution-body"><p>${q.solution}</p></div><div class="action-row"><button type="button" class="secondary" onclick="showSimilarQuestions('${kind}')">Show me similar questions</button><button type="button" class="secondary" onclick="toggleWeakQuestion('${q.id}')">${weak ? "Remove from review" : "Bookmark for review"}</button></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
           </article>
         </div>
         ${formulaOpen ? renderQuizFormulaSheet() : ""}
@@ -1154,9 +1248,51 @@ function chooseAnswer(kind, index) {
   } else {
     const prev = run.wrong[q.id] || [];
     if (!prev.includes(index)) run.wrong[q.id] = [...prev, index];
+    state.weakQuestions[q.id] = true;
   }
   saveState();
   render();
+}
+
+function toggleWeakQuestion(id) {
+  if (state.weakQuestions[id]) delete state.weakQuestions[id];
+  else state.weakQuestions[id] = true;
+  saveState();
+  render();
+}
+
+function goToReviewQuestion(id) {
+  const sampleIndex = sampleQuestions.findIndex(q => q.id === id);
+  if (sampleIndex >= 0) {
+    state.sampleFilter = null;
+    state.sample.index = sampleIndex;
+    routeTo("sample");
+    return;
+  }
+  const generatedIndex = state.generated?.findIndex(q => q.id === id) ?? -1;
+  if (generatedIndex >= 0) {
+    state.generatedRun.index = generatedIndex;
+    routeTo("generate");
+  }
+}
+
+function showSimilarQuestions(kind) {
+  const questions = getQuestionsForKind(kind);
+  const run = kind === "sample" ? state.sample : state.generatedRun;
+  const current = questions?.[run.index];
+  if (!current) return;
+  const pool = generateTest();
+  let similar = shuffle(pool.filter(q => typeMatchesQuestion(q, current) && q.id !== current.id)).slice(0, 5);
+  if (!similar.length) {
+    const chapter = questionChapter(current);
+    similar = shuffle(pool.filter(q => q.source.includes(chapter))).slice(0, 5);
+  }
+  if (!similar.length) similar = shuffle(pool).slice(0, 5);
+  state.generated = similar;
+  state.generatedCount = similar.length;
+  state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
+  saveState();
+  routeTo("generate");
 }
 
 function moveQuestion(kind, delta) {
@@ -1177,6 +1313,7 @@ function resetQuiz(kind) {
 function setGeneratedCount(value) {
   state.generatedCount = Math.max(5, Math.min(32, Number(value) || 22));
   saveState();
+  render();
 }
 
 function startGenerated() {
@@ -1217,21 +1354,119 @@ function renderHome() {
       <div class="panel"><h3>How to Use</h3><p>Work the original sample final first. Use the formula sheet when a solution cites a formula. Then generate a new test to practice the same structure with fresh numbers.</p></div>
       <div class="panel"><h3>Study Flow</h3><p>Use Study Tools for BAII Plus-style TVM practice, timed Pomodoro blocks, flashcards, and per-chapter practice filters.</p></div>
       <div class="panel"><h3>Source Discipline</h3><p>Each question carries a chapter/slide/note source tag in the data and on screen. Generated questions mirror the original sample final and stay inside the supplied materials.</p></div>
+    </section>
+    ${renderPerformanceDashboard()}`;
+}
+
+function performanceRows() {
+  const rows = {};
+  const add = (question, run) => {
+    const key = questionChapter(question);
+    if (!rows[key]) rows[key] = { total: 0, solved: 0, attempts: 0 };
+    rows[key].total += 1;
+    rows[key].solved += run?.solved?.[question.id] ? 1 : 0;
+    rows[key].attempts += run?.attempts?.[question.id] || 0;
+  };
+  sampleQuestions.forEach(q => add(q, state.sample));
+  if (state.generated) state.generated.forEach(q => add(q, state.generatedRun));
+  return Object.entries(rows).map(([label, row]) => ({ label, ...row }));
+}
+
+function typeRows() {
+  const rows = {};
+  const add = (question, run) => {
+    const key = normalizeQuestionType(question.type);
+    if (!rows[key]) rows[key] = { total: 0, solved: 0, attempts: 0 };
+    rows[key].total += 1;
+    rows[key].solved += run?.solved?.[question.id] ? 1 : 0;
+    rows[key].attempts += run?.attempts?.[question.id] || 0;
+  };
+  sampleQuestions.forEach(q => add(q, state.sample));
+  if (state.generated) state.generated.forEach(q => add(q, state.generatedRun));
+  return Object.entries(rows).sort((a, b) => b[1].attempts - a[1].attempts).slice(0, 8).map(([label, row]) => ({ label, ...row }));
+}
+
+function renderPerformanceDashboard() {
+  const chapterRows = performanceRows();
+  const questionTypeRows = typeRows();
+  const renderRows = rows => rows.map(row => {
+    const pctDone = row.total ? Math.round(row.solved / row.total * 100) : 0;
+    return `<div class="dashboard-row"><span>${row.label}</span><strong>${row.solved}/${row.total}</strong><small>${row.attempts} attempts</small><div class="mini-meter" aria-label="${pctDone}% solved"><span style="width:${pctDone}%"></span></div></div>`;
+  }).join("");
+  return `
+    <section class="panel performance-dashboard" aria-labelledby="performanceHeading">
+      <div>
+        <p class="eyebrow">Progress</p>
+        <h2 id="performanceHeading">Performance Dashboard</h2>
+      </div>
+      <div class="dashboard-grid">
+        <div>
+          <h3>By Chapter</h3>
+          ${renderRows(chapterRows)}
+        </div>
+        <div>
+          <h3>By Question Type</h3>
+          ${renderRows(questionTypeRows)}
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderReviewQueue() {
+  const weak = Object.keys(state.weakQuestions)
+    .map(id => allKnownQuestions().find(q => q.id === id))
+    .filter(Boolean);
+  const bookmarked = Object.keys(state.bookmarkedFormulas)
+    .map(id => formulas.find(f => f.id === id))
+    .filter(Boolean);
+  const weakList = weak.length ? weak.map(q => `
+    <button type="button" class="review-item" onclick="goToReviewQuestion('${q.id}')">
+      <span>${questionLabel(q)}</span>
+      <small>${questionChapter(q)} - ${normalizeQuestionType(q.type)}</small>
+    </button>`).join("") : `<p class="muted">Missed questions and bookmarked solved questions will appear here.</p>`;
+  const formulaList = bookmarked.length ? bookmarked.map(f => `
+    <button type="button" class="review-item" onclick="goToBookmarkedFormula('${f.id}')">
+      <span>${f.title}</span>
+      <small>${f.chapter} - ${f.source}</small>
+    </button>`).join("") : `<p class="muted">Bookmark formulas from the Formula Sheet to keep them here.</p>`;
+  return `
+    <section class="panel review-queue" aria-labelledby="reviewHeading">
+      <div>
+        <p class="eyebrow">Review</p>
+        <h2 id="reviewHeading">Weak Spots</h2>
+      </div>
+      <div class="dashboard-grid">
+        <div>
+          <h3>Missed Questions</h3>
+          <div class="review-list">${weakList}</div>
+        </div>
+        <div>
+          <h3>Bookmarked Formulas</h3>
+          <div class="review-list">${formulaList}</div>
+        </div>
+      </div>
     </section>`;
 }
 
 function renderFormulas() {
   const chapters = formulasByChapter();
+  const resultCount = chapters.reduce((sum, [, items]) => sum + items.length, 0);
   return `
     <section class="stack">
       <div>
         <h2 class="page-title">Formula Sheet</h2>
         <p class="muted">All formulas from the original formula sheet, grouped by chapter. Click a chapter to open or close its formulas.</p>
       </div>
+      <div class="filter-row formula-search-row">
+        <label class="filter-label" for="formulaSearch">Search formulas</label>
+        <input id="formulaSearch" class="search-input" type="search" value="${escAttr(state.formulaSearch)}" placeholder="Search by keyword, chapter, variable, or formula" oninput="setFormulaSearch(this.value)">
+        <span class="muted">${resultCount} matches</span>
+        ${state.formulaSearch ? `<button type="button" class="secondary" onclick="clearFormulaSearch()">Clear</button>` : ""}
+      </div>
       ${state.formulaReturn ? `<button type="button" class="formula-return-floating" onclick="backToFormulaReturn()">Back to ${state.formulaReturn === "generated" ? "Practice Test" : "Sample Test"}</button>` : ""}
-      <div class="formula-chapters">
+      ${resultCount ? `<div class="formula-chapters">
         ${chapters.map(([chapter, items]) => {
-          const isOpen = !!state.formulaOpen[chapter];
+          const isOpen = state.formulaSearch ? true : !!state.formulaOpen[chapter];
           const panelId = `formula-panel-${chapter.replace(/[^A-Za-z0-9]/g, "-")}`;
           return `
             <section class="formula-chapter ${isOpen ? "open" : ""}">
@@ -1244,7 +1479,7 @@ function renderFormulas() {
                   <div class="grid">
                     ${items.map((f, index) => `
                       <article id="formula-${f.id}" class="formula-card" style="--stagger:${index * 60}ms">
-                        <span class="badge">${f.source}</span>
+                        <div class="formula-card-top"><span class="badge">${f.source}</span><button type="button" class="small-button" onclick="toggleFormulaBookmark('${f.id}')" aria-pressed="${state.bookmarkedFormulas[f.id] ? "true" : "false"}">${state.bookmarkedFormulas[f.id] ? "Bookmarked" : "Bookmark"}</button></div>
                         <h3>${f.title}</h3>
                         <div class="formula">\\(${f.tex}\\)</div>
                         <p>${formatText(f.plain)}</p>
@@ -1257,7 +1492,7 @@ function renderFormulas() {
               </div>
             </section>`;
         }).join("")}
-      </div>
+      </div>` : `<div class="panel"><p>No formulas match that search.</p></div>`}
     </section>`;
 }
 
@@ -1301,9 +1536,11 @@ function renderTools() {
           </div>
           <div class="alarm-row">
             <label>Alarm sound
-              <select id="alarmSound" onchange="setAlarmSound(this.value)">
-                ${alarmSounds.map(sound => `<option value="${sound.id}" ${state.timer.alarm === sound.id ? "selected" : ""}>${sound.label}</option>`).join("")}
-              </select>
+              <span class="select-shell">
+                <select id="alarmSound" class="chapter-select" onchange="setAlarmSound(this.value)">
+                  ${alarmSounds.map(sound => `<option value="${sound.id}" ${state.timer.alarm === sound.id ? "selected" : ""}>${sound.label}</option>`).join("")}
+                </select>
+              </span>
             </label>
             <button id="alarmPreviewButton" type="button" class="secondary" onclick="previewAlarm()">Preview</button>
           </div>
@@ -1345,6 +1582,8 @@ function renderTools() {
           <div class="grid">${byChapter}</div>
         </article>
       </div>
+      ${renderReviewQueue()}
+      ${renderPerformanceDashboard()}
     </section>`;
 }
 
