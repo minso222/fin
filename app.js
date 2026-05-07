@@ -1,5 +1,13 @@
 const STORE = "fin295-study-state-v1";
 const FORMULA_PDF = "assets/fin-295-final-formula.pdf";
+const GA_MEASUREMENT_ID = "G-9QBNY7JDGE";
+const pageTitles = {
+  home: "Home",
+  sample: "Sample Test",
+  generate: "Practice Test",
+  formulas: "Formula Sheet",
+  tools: "Study Tools"
+};
 
 const timerDefaults = {
   work: 25,
@@ -796,6 +804,21 @@ function routeTo(route, options = {}) {
   syncMobileMenu();
   saveState();
   render();
+  trackPageView();
+}
+
+function trackPageView() {
+  if (typeof window.gtag !== "function") return;
+  const route = state.route || "home";
+  const pageTitle = pageTitles[route] || "FIN 295 Final Study Studio";
+  const basePath = window.location.pathname.replace(/\/$/, "") || "/";
+  const pagePath = route === "home" ? basePath : `${basePath}#${route}`;
+  window.gtag("event", "page_view", {
+    send_to: GA_MEASUREMENT_ID,
+    page_title: `FIN 295 Final Study Studio | ${pageTitle}`,
+    page_path: pagePath,
+    page_location: `${window.location.origin}${pagePath}`
+  });
 }
 
 function syncNavigation() {
@@ -1181,10 +1204,10 @@ function renderTools() {
         <article class="tool-panel">
           <h3>Flashcards</h3>
           <button type="button" class="flashcard" onclick="flipFlash()">${state.flashBack ? f[1] : f[0]}</button>
-          <div class="action-row" style="margin-top:.8rem">
-            <button type="button" class="secondary" onclick="previousFlash()">Back</button>
+          <div class="action-row flashcard-controls" style="margin-top:.8rem">
+            <button type="button" class="secondary icon-text-button" onclick="previousFlash()"><span aria-hidden="true">&larr;</span><span>Back</span></button>
+            <button type="button" class="secondary icon-text-button" onclick="nextFlash()"><span>Next</span><span aria-hidden="true">&rarr;</span></button>
             <button type="button" class="secondary" onclick="shuffleFlashcards()">Shuffle</button>
-            <button type="button" class="secondary" onclick="nextFlash()">Next card</button>
           </div>
         </article>
         <article class="tool-panel">
@@ -1203,6 +1226,16 @@ function renderTools() {
         </article>
       </div>
     </section>`;
+}
+
+function renderCitationSection() {
+  return `
+    <footer class="site-footer" aria-labelledby="citationHeading">
+      <div class="citation-section">
+        <p id="citationHeading" class="eyebrow">Attribution</p>
+        <p>Website content, concepts, formulas, and educational material are based on <cite>Fundamentals of Financial Management, 16th Edition</cite> by Eugene F. Brigham and Joel F. Houston, along with course materials, PowerPoints, and notes created by Dr. Xiaofeng Wang.</p>
+      </div>
+    </footer>`;
 }
 
 function renderContactSection() {
@@ -1248,7 +1281,7 @@ function render() {
     formulas: renderFormulas,
     tools: renderTools
   }[state.route]();
-  app.innerHTML = `${page}${renderContactSection()}`;
+  app.innerHTML = `${page}${renderContactSection()}${renderCitationSection()}`;
   if (state.route === "tools") {
     syncCalc();
     syncTimer();
@@ -1597,4 +1630,5 @@ document.addEventListener("DOMContentLoaded", () => {
   syncMobileMenu();
   window.addEventListener("resize", () => renderFloatingTimer());
   render();
+  trackPageView();
 });
