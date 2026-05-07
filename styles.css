@@ -1289,13 +1289,14 @@ body.page-transition .contact-action:nth-child(3) {
 
 .calc-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
   position: relative;
   z-index: 2;
 }
 
 .calc-grid button {
+  min-width: 0;
   min-height: 44px;
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -1577,12 +1578,6 @@ body.page-transition .contact-action:nth-child(3) {
   .quiz-formula-pdf {
     height: calc(72vh - 58px);
     min-height: 460px;
-  }
-  .calc-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .tvm-values {
-    grid-template-columns: repeat(2, 1fr);
   }
   .topbar {
     gap: 1rem;

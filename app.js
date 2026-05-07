@@ -335,6 +335,28 @@ const formulas = [
     example: "For t = 6, MRP = 0.1%(5) = 0.50%."
   },
   {
+    id: "inflation-premium-n",
+    chapter: "Chapter 6",
+    source: "Chapter 6 notes",
+    title: "Inflation Premium for N-Year Security",
+    tex: "IP_N = \\frac{IP_1 + IP_2 + \\cdots + IP_N}{N}",
+    plain: "Estimates the inflation premium as the average expected inflation rate over the security's life.",
+    variables: "IP_N = inflation premium for an N-year security; IP_t = expected inflation in year t.",
+    when: "Use when expected inflation varies across future years.",
+    example: "If expected inflation is 4%, 5%, and 6%, IP_3 = (4% + 5% + 6%) / 3 = 5.00%."
+  },
+  {
+    id: "corporate-bond-yield-spread",
+    chapter: "Chapter 6",
+    source: "Chapter 6 notes",
+    title: "Corporate Bond Yield Spread",
+    tex: "Spread = Corporate\\ bond\\ yield - Treasury\\ bond\\ yield",
+    plain: "Measures the extra yield investors require for a corporate bond relative to a Treasury bond with similar maturity.",
+    variables: "Corporate bond yield = yield on the risky bond; Treasury bond yield = yield on a comparable default-free bond.",
+    when: "Use to isolate the risk premium over Treasury securities.",
+    example: "If a corporate bond yields 8.2% and a comparable Treasury yields 5.4%, the spread is 2.8%."
+  },
+  {
     id: "npv",
     chapter: "Chapter 11",
     source: "Chapter 11 slides 7-12; sample final Q1",
@@ -390,6 +412,39 @@ const formulas = [
     example: "For price $1,330, $110 annual coupon, call price $1,130 in 4 years, YTC = 4.77%."
   },
   {
+    id: "current-yield",
+    chapter: "Chapter 7",
+    source: "Chapter 7 notes",
+    title: "Current Yield",
+    tex: "Current\\ Yield = \\frac{Annual\\ coupon\\ payment}{Current\\ bond\\ price}",
+    plain: "Measures the annual coupon income as a percentage of the bond's current market price.",
+    variables: "Annual coupon payment = yearly interest paid; Current bond price = market price today.",
+    when: "Use when the question asks for the bond's income yield.",
+    example: "A $90 annual coupon on a $1,125 bond gives current yield = 90 / 1125 = 8.00%."
+  },
+  {
+    id: "bond-capital-gains-yield",
+    chapter: "Chapter 7",
+    source: "Chapter 7 notes",
+    title: "Capital Gains Yield",
+    tex: "Capital\\ Gains\\ Yield = \\frac{P_1-P_0}{P_0}",
+    plain: "Measures the percentage price change expected over the holding period.",
+    variables: "P_0 = current bond price; P_1 = expected bond price at the end of the period.",
+    when: "Use when a bond price is expected to move toward par or another future price.",
+    example: "If a bond rises from $960 to $980, capital gains yield = 20 / 960 = 2.08%."
+  },
+  {
+    id: "expected-total-return-ytm",
+    chapter: "Chapter 7",
+    source: "Chapter 7 notes",
+    title: "Expected Total Return / YTM",
+    tex: "Expected\\ Total\\ Return = Current\\ Yield + Capital\\ Gains\\ Yield \\approx YTM",
+    plain: "Adds coupon income yield and expected price-change yield to approximate the bond's total return.",
+    variables: "Current yield = coupon income / price; Capital gains yield = expected price change / price.",
+    when: "Use to connect the components of bond return with yield to maturity.",
+    example: "If current yield is 7.5% and capital gains yield is 1.2%, expected total return is about 8.7%."
+  },
+  {
     id: "expected-return",
     chapter: "Chapter 8",
     source: "Chapter 8 slides 4 and 9-12; sample final Q9",
@@ -423,6 +478,17 @@ const formulas = [
     example: "5.00% + 8.00%(0.85) = 11.80%."
   },
   {
+    id: "dcf-cost-of-equity",
+    chapter: "Chapter 10",
+    source: "Chapter 10 notes",
+    title: "DCF Cost of Equity",
+    tex: "r_s = \\frac{D_1}{P_0} + g",
+    plain: "Estimates the cost of common equity as dividend yield plus constant growth.",
+    variables: "D_1 = next expected dividend; P_0 = current stock price; g = constant growth rate.",
+    when: "Use the discounted cash flow approach when dividends and growth are given.",
+    example: "If D1 = $2.40, P0 = $40, and g = 5%, r_s = 2.40 / 40 + 5% = 11.00%."
+  },
+  {
     id: "constant-growth",
     chapter: "Chapter 9",
     source: "Chapter 9 slides 9-16; Chapter 9_1 notes; sample final Q10-Q12",
@@ -454,6 +520,17 @@ const formulas = [
     variables: "w = target weights; r = component costs; T = tax rate.",
     when: "Use for capital budgeting discount rates and cost of capital questions.",
     example: "0.60(6.00%) + 0.15(9.00%) + 0.25(11.25%) = 7.76%."
+  },
+  {
+    id: "bond-yield-plus-risk-premium",
+    chapter: "Chapter 10",
+    source: "Chapter 10 notes",
+    title: "Bond-Yield-Plus-Risk-Premium",
+    tex: "r_s = Bond\\ yield + Risk\\ premium",
+    plain: "Estimates the cost of common equity by adding an equity risk premium to the firm's long-term bond yield.",
+    variables: "Bond yield = yield on the firm's long-term debt; Risk premium = extra return required for equity risk.",
+    when: "Use when the bond-yield-plus-risk-premium approach is specified.",
+    example: "If the firm's bond yield is 7% and the risk premium is 4%, r_s = 11%."
   },
   {
     id: "preferred",
