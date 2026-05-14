@@ -623,6 +623,8 @@ const state = {
   sample: { index: 0, attempts: {}, solved: {}, wrong: {} },
   generated: null,
   generatedCount: 22,
+  generatedDifficulty: "Adaptive",
+  generationSeed: "",
   generatedRun: { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} },
   timer: { ...timerDefaults },
   flashIndex: 0,
@@ -632,6 +634,8 @@ const state = {
   formulaSearch: "",
   bookmarkedFormulas: {},
   weakQuestions: {},
+  weakConcepts: {},
+  adaptiveMastery: {},
   quizFormulaOpen: false,
   formulaReturn: null,
   contactRevealed: {},
@@ -666,6 +670,8 @@ function loadState() {
   }
   if (!state.generatedRun.wrong) state.generatedRun.wrong = {};
   if (!state.generatedRun.first) state.generatedRun.first = {};
+  if (!["Adaptive", "Easy", "Medium", "Hard", "Expert"].includes(state.generatedDifficulty)) state.generatedDifficulty = "Adaptive";
+  if (typeof state.generationSeed !== "string") state.generationSeed = "";
   state.generatedCount = Math.max(5, Math.min(32, Number(state.generatedCount) || 22));
   if (state.sampleFilter === undefined) state.sampleFilter = null;
   if (!Array.isArray(state.flashOrder) || state.flashOrder.length !== flashcards.length) {
@@ -675,6 +681,8 @@ function loadState() {
   if (typeof state.formulaSearch !== "string") state.formulaSearch = "";
   if (!state.bookmarkedFormulas || typeof state.bookmarkedFormulas !== "object") state.bookmarkedFormulas = {};
   if (!state.weakQuestions || typeof state.weakQuestions !== "object") state.weakQuestions = {};
+  if (!state.weakConcepts || typeof state.weakConcepts !== "object") state.weakConcepts = {};
+  if (!state.adaptiveMastery || typeof state.adaptiveMastery !== "object") state.adaptiveMastery = {};
   state.quizFormulaOpen = !!state.quizFormulaOpen;
   if (!["sample", "generated"].includes(state.formulaReturn)) state.formulaReturn = null;
   if (!state.contactRevealed || typeof state.contactRevealed !== "object") state.contactRevealed = {};
@@ -691,6 +699,8 @@ function saveState() {
     sample: state.sample,
     generated: state.generated,
     generatedCount: state.generatedCount,
+    generatedDifficulty: state.generatedDifficulty,
+    generationSeed: state.generationSeed,
     generatedRun: state.generatedRun,
     timer: state.timer,
     flashIndex: state.flashIndex,
@@ -699,6 +709,8 @@ function saveState() {
     formulaSearch: state.formulaSearch,
     bookmarkedFormulas: state.bookmarkedFormulas,
     weakQuestions: state.weakQuestions,
+    weakConcepts: state.weakConcepts,
+    adaptiveMastery: state.adaptiveMastery,
     quizFormulaOpen: state.quizFormulaOpen,
     formulaReturn: state.formulaReturn,
     contactRevealed: state.contactRevealed
@@ -753,6 +765,486 @@ function makeQ(id, type, source, formulaIds, prompt, correct, formatter, solutio
 
 function makeConceptQ(id, type, source, formulaIds, prompt, choices, answer, solution) {
   return { id, type, source, formulaIds, prompt, choices, answer, solution };
+}
+
+const difficultyLevels = ["Easy", "Medium", "Hard", "Expert"];
+const estimatedTimeByDifficulty = { Easy: "1-2 min", Medium: "2-3 min", Hard: "4-6 min", Expert: "7-10 min" };
+const professionalQuestionTypes = ["multiple_choice", "multi_select", "numeric_calculation", "fill_blank", "matching", "true_false_explain", "case_study", "scenario_analysis", "what_if", "error_identification", "comparison"];
+const companyNames = ["Aster Ridge Foods", "Blue Harbor Robotics", "Cobalt Thread Apparel", "Driftline Energy", "Evergreen Components", "Granite Bank", "HarborPeak Logistics", "LumenEdge Software", "Northstar Medical", "Pioneer Packaging", "Redwood Grid", "Summit Home Goods", "TidalWorks Marine", "Vertex Mobility", "Willow Creek Brands"];
+const industries = ["consumer staples", "medical devices", "regional banking", "cloud software", "renewable power", "industrial equipment", "specialty retail", "transportation", "semiconductors", "building materials"];
+const macroEnvironments = ["inflation is cooling and the yield curve is flattening", "credit spreads are widening after a volatility shock", "the Fed is expected to cut rates within the next year", "long-term Treasury yields have jumped after strong jobs data", "investors are rotating from growth stocks into defensive stocks", "recession odds have risen and equity risk premiums are expanding"];
+
+function hashSeed(value) {
+  return String(value || `${Date.now()}-${Math.random()}`).split("").reduce((hash, ch) => {
+    hash = (hash << 5) - hash + ch.charCodeAt(0);
+    return hash | 0;
+  }, 2166136261);
+}
+
+function createRng(seed) {
+  let t = hashSeed(seed) >>> 0;
+  return function rng() {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ t >>> 15, 1 | t);
+    r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
+    return ((r ^ r >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const rand = (rng, min, max, decimals = 0) => {
+  const value = min + rng() * (max - min);
+  return decimals ? Number(value.toFixed(decimals)) : Math.round(value);
+};
+const pick = (rng, arr) => arr[Math.floor(rng() * arr.length) % arr.length];
+const seededShuffle = (arr, rng) => arr.map(v => [rng(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+const pct1 = n => `${Number(n).toFixed(1)}%`;
+
+function formatDataTable(rows) {
+  return rows.map(row => row.join(" | ")).join("\n");
+}
+
+function advancedChoiceSet(correct, formatter, distractors, rng) {
+  const correctLabel = formatter(correct);
+  const labels = [correctLabel, ...distractors.map(formatter)];
+  const unique = [...new Set(labels)];
+  while (unique.length < 5) unique.push(formatter(correct * (1 + (unique.length - 2) * 0.07)));
+  const choices = seededShuffle(unique.slice(0, 5), rng);
+  return { choices, answer: choices.indexOf(correctLabel) };
+}
+
+function makeAdvancedQuestion(input) {
+  const explanation = [
+    input.concept,
+    input.step_by_step_solution,
+    input.tip ? `Shortcut/tip: ${input.tip}` : ""
+  ].filter(Boolean).join(" ");
+  const choiceExplanations = input.choice_explanations || input.choices
+    ?.map((choice, i) => i === input.answer ? null : `${choice}: this reflects a common trap for this topic; compare it against the formula setup and the listed mistakes.`)
+    .filter(Boolean) || [];
+  return {
+    id: input.id,
+    type: input.topic,
+    source: `${input.chapter} ${input.source || "advanced generator"}`,
+    formulaIds: input.formulaIds || [],
+    prompt: input.prompt,
+    choices: input.choices,
+    answer: input.answer,
+    solution: input.solution || explanation,
+    difficulty: input.difficulty,
+    topic: input.topic,
+    chapter: input.chapter,
+    question_type: input.question_type || "multiple_choice",
+    estimated_time: input.estimated_time || estimatedTimeByDifficulty[input.difficulty],
+    learning_objective: input.learning_objective,
+    formula_used: input.formula_used || (input.formulaIds || []).join(", ") || "Conceptual reasoning",
+    tags: input.tags || [],
+    explanation,
+    step_by_step_solution: input.step_by_step_solution,
+    common_mistakes: input.common_mistakes || [],
+    choice_explanations: choiceExplanations
+  };
+}
+
+function selectGeneratedDifficulty(rng) {
+  if (state.generatedDifficulty && state.generatedDifficulty !== "Adaptive") return state.generatedDifficulty;
+  const solved = Object.values(state.generatedRun?.solved || {}).filter(Boolean).length;
+  const attempts = Object.values(state.generatedRun?.attempts || {}).reduce((a, b) => a + b, 0);
+  const accuracy = attempts ? solved / attempts : 0.55;
+  const weakCount = Object.values(state.weakConcepts || {}).reduce((a, b) => a + Number(b || 0), 0);
+  if (weakCount > 5 && rng() < 0.45) return "Medium";
+  if (accuracy > 0.78 && rng() < 0.55) return pick(rng, ["Hard", "Expert"]);
+  if (accuracy > 0.62) return pick(rng, ["Medium", "Hard"]);
+  return pick(rng, ["Easy", "Medium"]);
+}
+
+function bondPrice(face, couponRate, marketRate, years, freq = 1) {
+  return pvAnnuity(marketRate / freq, years * freq, face * couponRate / freq, face);
+}
+
+function financeTemplates() {
+  return [
+    bondRepriceTemplate, callableBondTrapTemplate, bondComparisonTemplate, yieldCurveConceptTemplate,
+    riskScenarioTemplate, capmMispricingTemplate, portfolioVarianceTemplate, betaWhatIfTemplate,
+    constantGrowthReverseTemplate, preferredVsCommonTemplate, governanceTemplate, growthSensitivityTemplate,
+    waccFullTemplate, costEquityMethodsTemplate, financingStrategyTemplate, discountRateChoiceTemplate,
+    capitalBudgetingCaseTemplate, npvIrrConflictTemplate, replacementProjectTemplate, sunkCostTrapTemplate
+  ];
+}
+
+function bondRepriceTemplate(rng, difficulty, ordinal) {
+  const company = pick(rng, companyNames), years = rand(rng, 6, difficulty === "Expert" ? 18 : 12);
+  const face = 1000, coupon = rand(rng, 48, 92) / 1000, market1 = rand(rng, 42, 82) / 1000;
+  const shift = rand(rng, difficulty === "Easy" ? 40 : 75, difficulty === "Expert" ? 180 : 125) / 10000;
+  const freq = rng() < 0.75 ? 2 : 1;
+  const price1 = bondPrice(face, coupon, market1, years, freq);
+  const price2 = bondPrice(face, coupon, market1 + shift, years - 1, freq);
+  const correct = price2 - price1;
+  const made = advancedChoiceSet(correct, money, [price2 - face, price1 - price2, correct / freq, correct * 1.18], rng);
+  return makeAdvancedQuestion({
+    id: `adv-bond-reprice-${ordinal}`, chapter: "Chapter 7", difficulty, topic: "bond-repricing", question_type: "scenario_analysis",
+    formulaIds: ["bond-price"], formula_used: "Bond price = PV(coupons) + PV(par)",
+    prompt: `${company} has a ${years}-year ${freq === 2 ? "semiannual" : "annual"} coupon bond with a ${pct1(coupon * 100)} coupon and $1,000 par. The required return is ${pct1(market1 * 100)} today. One year later, the required return rises to ${pct1((market1 + shift) * 100)}. Ignoring the coupon received during the year, what is the approximate price change?`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Reprice a bond after time passes and market yields change.",
+    step_by_step_solution: `Part A: price the bond today using ${years * freq} periods and a periodic rate of ${pct1(market1 * 100 / freq)}. Part B: after one year, use ${(years - 1) * freq} remaining periods and ${pct1((market1 + shift) * 100 / freq)} per period. Price today is ${money(price1)} and next year's price is ${money(price2)}, so the price change is ${money(correct)}.`,
+    concept: "Bond prices move inversely with required returns. Longer maturity and lower coupons usually create more rate sensitivity.",
+    common_mistakes: ["Using the coupon rate as the discount rate", "Forgetting to reduce maturity after one year", "Using annual periods for a semiannual bond"]
+  });
+}
+
+function callableBondTrapTemplate(rng, difficulty, ordinal) {
+  const company = pick(rng, companyNames), price = rand(rng, 1120, 1340), coupon = rand(rng, 82, 125);
+  const callPrice = rand(rng, 1040, 1140), callYears = rand(rng, 3, 6), maturity = callYears + rand(rng, 5, 12);
+  const ytc = irr([-price, ...Array(callYears - 1).fill(coupon), coupon + callPrice]) * 100;
+  const ytm = irr([-price, ...Array(maturity - 1).fill(coupon), coupon + 1000]) * 100;
+  const correct = Math.min(ytc, ytm);
+  const made = advancedChoiceSet(correct, pct, [ytm, ytc + 1.2, coupon / price * 100, coupon / 1000 * 100], rng);
+  return makeAdvancedQuestion({
+    id: `adv-callable-${ordinal}`, chapter: "Chapter 7", difficulty, topic: "yield-to-call", question_type: "error_identification",
+    formulaIds: ["ytc"], formula_used: "YTC and YTM IRR setup",
+    prompt: `${company} issued a premium callable bond now priced at ${money(price)}. It pays an annual coupon of ${money(coupon)}, matures in ${maturity} years, and can be called in ${callYears} years at ${money(callPrice)}. Rates have declined sharply. Which yield is the better investor expectation?`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Identify the yield-to-call trap on premium callable bonds.",
+    step_by_step_solution: `Compute YTC with call-date cash flows: price = coupons for ${callYears} years plus call price. YTC is ${pct(ytc)}. YTM using maturity cash flows is ${pct(ytm)}. Because this is a premium callable bond in a falling-rate environment, investors focus on the lower likely yield: ${pct(correct)}.`,
+    concept: "Issuers call bonds when refinancing is attractive, which creates reinvestment risk for investors.",
+    common_mistakes: ["Reporting current yield", "Using par instead of call price", "Assuming the highest yield is the relevant yield"]
+  });
+}
+
+function bondComparisonTemplate(rng, difficulty, ordinal) {
+  const c1 = rand(rng, 45, 60) / 1000, c2 = rand(rng, 75, 95) / 1000, y = rand(rng, 52, 72) / 1000;
+  const yearsA = rand(rng, 5, 8), yearsB = rand(rng, 15, 25);
+  return makeAdvancedQuestion({
+    id: `adv-bond-compare-${ordinal}`, chapter: "Chapter 7", difficulty, topic: "interest-rate-sensitivity", question_type: "comparison",
+    formulaIds: ["bond-price"],
+    prompt: `A portfolio manager compares two option-free bonds before a possible rate hike. Bond A has a ${yearsA}-year maturity and ${pct1(c1 * 100)} coupon. Bond B has a ${yearsB}-year maturity and ${pct1(c2 * 100)} coupon. Both have similar credit quality and YTMs near ${pct1(y * 100)}. Which bond should lose more value if market yields rise by 1%?`,
+    choices: ["Bond A, because shorter maturity bonds have more repricing risk.", "Bond B, because the longer maturity dominates even though its coupon is higher.", "They lose the same value because the YTM change is the same.", "Bond A, because its coupon is lower and coupon rate is the discount rate.", "Neither changes because par value is fixed."],
+    answer: 1,
+    learning_objective: "Interpret duration intuition without needing a full duration formula.",
+    formula_used: "Bond price sensitivity intuition",
+    step_by_step_solution: "A longer stream of fixed cash flows is more exposed to discount-rate changes. Bond B has a much longer maturity, so its price should be more sensitive to the 1% yield increase despite its higher coupon.",
+    concept: "Maturity, coupon, and embedded options all affect price sensitivity.",
+    common_mistakes: ["Thinking equal yield changes imply equal dollar price changes", "Treating par value as price protection", "Ignoring time to maturity"]
+  });
+}
+
+function yieldCurveConceptTemplate(rng, difficulty, ordinal) {
+  const env = pick(rng, macroEnvironments);
+  return makeAdvancedQuestion({
+    id: `adv-yield-curve-${ordinal}`, chapter: "Chapter 7", difficulty, topic: "yield-curve-interpretation", question_type: "case_study",
+    prompt: `Treasury analysts observe that ${env}. A CFO plans to issue fixed-rate debt for a long-lived factory. Which statement best connects the yield-curve environment to the financing decision?`,
+    choices: ["The coupon rate alone determines value, so the yield curve is irrelevant.", "If long-term yields are unusually high, locking long-term fixed-rate debt may be expensive but reduces rollover risk.", "A callable bond always benefits investors when rates fall.", "Short-term rates should be used to price every bond cash flow regardless of maturity.", "A premium bond must have a lower coupon than the market rate."],
+    answer: 1,
+    learning_objective: "Connect macro yield conditions to corporate bond issuance choices.",
+    formula_used: "Conceptual bond valuation",
+    step_by_step_solution: "Long-lived assets are usually financed with long-term capital to reduce refinancing risk. Higher long-term yields raise the cost of locking in that financing, so the CFO weighs cost against rollover risk.",
+    concept: "The yield curve matters because each maturity has a different opportunity cost of capital.",
+    common_mistakes: ["Assuming coupon rate is market rate", "Ignoring refinancing risk", "Thinking callable features help bondholders"]
+  });
+}
+
+function riskScenarioTemplate(rng, difficulty, ordinal) {
+  const probs = [0.25, 0.5, 0.25], returns = [rand(rng, -18, -7), rand(rng, 7, 14), rand(rng, 22, 38)];
+  const er = returns.reduce((s, r, i) => s + r * probs[i], 0);
+  const sd = Math.sqrt(returns.reduce((s, r, i) => s + probs[i] * Math.pow(r - er, 2), 0));
+  const made = advancedChoiceSet(sd, pct, [er, sd * 0.5, sd * 1.25, Math.abs(returns[2] - returns[0])], rng);
+  return makeAdvancedQuestion({
+    id: `adv-risk-sd-${ordinal}`, chapter: "Chapter 8", difficulty, topic: "standard-deviation", question_type: "numeric_calculation",
+    formulaIds: ["expected-return", "std-dev"],
+    prompt: `A portfolio team models recession, base, and expansion outcomes:\n${formatDataTable([["Scenario", "Probability", "Return"], ["Recession", "25%", `${returns[0]}%`], ["Base", "50%", `${returns[1]}%`], ["Expansion", "25%", `${returns[2]}%`]])}\nWhat is the standard deviation of returns?`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Calculate expected return first, then use it to calculate stand-alone risk.",
+    formula_used: "Expected return and standard deviation",
+    step_by_step_solution: `Expected return = .25(${returns[0]}%) + .50(${returns[1]}%) + .25(${returns[2]}%) = ${pct(er)}. Variance = sum p(r - expected r)^2. Standard deviation = ${pct(sd)}.`,
+    concept: "Standard deviation measures total dispersion, not only market risk.",
+    common_mistakes: ["Averaging returns without probabilities", "Stopping at expected return", "Using beta instead of standard deviation for stand-alone risk"]
+  });
+}
+
+function capmMispricingTemplate(rng, difficulty, ordinal) {
+  const rf = rand(rng, 35, 58) / 10, mrp = rand(rng, 55, 82) / 10, beta = rand(rng, 70, 165) / 100;
+  const required = rf + beta * mrp;
+  const expected = required + pick(rng, [-2.1, -1.2, 1.4, 2.4]);
+  const undervalued = expected > required;
+  return makeAdvancedQuestion({
+    id: `adv-capm-sml-${ordinal}`, chapter: "Chapter 8", difficulty, topic: "capm-sml", question_type: "scenario_analysis",
+    formulaIds: ["capm"],
+    prompt: `A stock has beta ${beta.toFixed(2)}. The risk-free rate is ${pct(rf)} and the market risk premium is ${pct(mrp)}. Analysts forecast an expected return of ${pct(expected)}. Relative to the SML, how should the stock be interpreted?`,
+    choices: ["Overvalued; expected return is below required return.", "Undervalued; expected return is above required return.", "Fairly valued; beta is below the market beta.", "Overvalued; expected return is above required return.", "Cannot tell because standard deviation is missing."],
+    answer: undervalued ? 1 : 0,
+    learning_objective: "Compare expected return with CAPM required return.",
+    formula_used: "r_s = r_RF + beta(RPM)",
+    step_by_step_solution: `Required return = ${pct(rf)} + ${beta.toFixed(2)}(${pct(mrp)}) = ${pct(required)}. Expected return is ${pct(expected)}. ${expected > required ? "Expected exceeds required, so the stock plots above the SML and is undervalued." : "Expected is below required, so the stock plots below the SML and is overvalued."}`,
+    concept: "CAPM gives the return investors require for market risk. Mispricing comes from comparing expected return to required return.",
+    common_mistakes: ["Using market return instead of market risk premium", "Thinking high beta automatically means undervalued", "Using total risk instead of beta"]
+  });
+}
+
+function portfolioVarianceTemplate(rng, difficulty, ordinal) {
+  const a = rand(rng, 8, 15), b = rand(rng, 10, 20), betaA = rand(rng, 70, 120) / 100, betaB = rand(rng, 110, 180) / 100;
+  return makeAdvancedQuestion({
+    id: `adv-risk-decomp-${ordinal}`, chapter: "Chapter 8", difficulty, topic: "risk-decomposition", question_type: "multi_select",
+    prompt: `A diversified mutual fund holds hundreds of stocks. Stock A has standard deviation ${pct(a)} and beta ${betaA.toFixed(2)}. Stock B has standard deviation ${pct(b)} and beta ${betaB.toFixed(2)}. Which conclusion is most defensible for a diversified investor?`,
+    choices: ["Stock A is always safer because its standard deviation is lower.", "Stock B requires the higher CAPM return because its beta is higher.", "Both stocks require the same return because diversifiable risk disappears.", "Standard deviation should replace beta in CAPM.", "The lower-beta stock must have the higher required return."],
+    answer: 1,
+    learning_objective: "Separate stand-alone risk from market risk for diversified investors.",
+    formula_used: "CAPM beta logic",
+    step_by_step_solution: "For diversified investors, beta measures relevant market risk. Stock B has the higher beta, so CAPM assigns it the higher required return even if total standard deviation comparisons are tempting.",
+    concept: "Diversification can reduce firm-specific risk, but it does not eliminate systematic risk.",
+    common_mistakes: ["Confusing total risk with market risk", "Assuming lower standard deviation always means lower required return"]
+  });
+}
+
+function betaWhatIfTemplate(rng, difficulty, ordinal) {
+  const beta = rand(rng, 75, 140) / 100, rf = rand(rng, 30, 55) / 10, mrp = rand(rng, 50, 75) / 10, increase = rand(rng, 80, 180) / 100;
+  const change = beta * increase;
+  const made = advancedChoiceSet(change, pct, [increase, change / beta, change * -1, beta * (mrp + increase)], rng);
+  return makeAdvancedQuestion({
+    id: `adv-beta-whatif-${ordinal}`, chapter: "Chapter 8", difficulty, topic: "capm-sensitivity", question_type: "what_if",
+    formulaIds: ["capm"],
+    prompt: `What happens to the CAPM required return for a stock with beta ${beta.toFixed(2)} if the market risk premium rises by ${pct(increase)}? The risk-free rate is unchanged.`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Measure CAPM sensitivity to a market risk premium shift.",
+    formula_used: "Change in r_s = beta x change in RPM",
+    step_by_step_solution: `Only the risk premium changes, so required return changes by beta x premium change = ${beta.toFixed(2)} x ${pct(increase)} = ${pct(change)}.`,
+    concept: "Aggressive stocks amplify market premium changes; defensive stocks dampen them.",
+    common_mistakes: ["Adding the full premium change without beta", "Recalculating with total market return", "Changing the risk-free rate too"]
+  });
+}
+
+function constantGrowthReverseTemplate(rng, difficulty, ordinal) {
+  const p0 = rand(rng, 28, 86), d1 = rand(rng, 120, 340) / 100, rs = rand(rng, 92, 145) / 1000;
+  const g = rs - d1 / p0;
+  const made = advancedChoiceSet(g * 100, pct, [rs * 100, d1 / p0 * 100, (rs + d1 / p0) * 100, g * 80], rng);
+  return makeAdvancedQuestion({
+    id: `adv-stock-growth-${ordinal}`, chapter: "Chapter 9", difficulty, topic: "constant-growth", question_type: "fill_blank",
+    formulaIds: ["constant-growth"],
+    prompt: `A mature ${pick(rng, industries)} firm trades at ${money(p0)}. Next year's dividend is expected to be ${money(d1)}, and investors require ${pct(rs * 100)}. Assuming constant growth, solve for the implied growth rate.`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Reverse-engineer growth from the Gordon model.",
+    formula_used: "P0 = D1 / (r_s - g), so g = r_s - D1/P0",
+    step_by_step_solution: `Dividend yield = ${money(d1)} / ${money(p0)} = ${pct(d1 / p0 * 100)}. Implied growth = required return - dividend yield = ${pct(rs * 100)} - ${pct(d1 / p0 * 100)} = ${pct(g * 100)}.`,
+    concept: "In constant growth, total required return equals dividend yield plus growth.",
+    common_mistakes: ["Using D0 instead of D1", "Adding dividend yield to required return", "Forgetting that capital gains yield equals g"]
+  });
+}
+
+function preferredVsCommonTemplate(rng, difficulty, ordinal) {
+  const div = rand(rng, 4, 8), rp = rand(rng, 70, 105) / 1000, g = rand(rng, 25, 55) / 1000, rs = rp + g + rand(rng, 20, 45) / 1000;
+  const prefValue = div / rp;
+  return makeAdvancedQuestion({
+    id: `adv-preferred-${ordinal}`, chapter: "Chapter 9", difficulty, topic: "preferred-stock", question_type: "comparison",
+    formulaIds: ["preferred"],
+    prompt: `A company has preferred stock paying a fixed ${money(div)} annual dividend and common stock expected to grow dividends at ${pct(g * 100)}. Which valuation idea is correct if preferred investors require ${pct(rp * 100)} and common shareholders require ${pct(rs * 100)}?`,
+    choices: [`Preferred value is ${money(prefValue)} because the fixed dividend is a perpetuity.`, `Preferred value is ${money(div / (rp - g))} because preferred dividends grow at the common-stock growth rate.`, "Common and preferred must have the same required return because both are equity.", "Preferred stock cannot be valued because it has no maturity.", "The preferred dividend should be discounted at the cost of debt after tax."],
+    answer: 0,
+    learning_objective: "Distinguish preferred-stock perpetuity valuation from common-stock growth valuation.",
+    formula_used: "V_p = D_p / r_p",
+    step_by_step_solution: `Preferred dividends are fixed, so value = ${money(div)} / ${pct(rp * 100)} = ${money(prefValue)}. Common stock uses growth logic only when common dividends are expected to grow.`,
+    concept: "Preferred stock is equity-like but its fixed dividend makes it mathematically similar to a perpetuity.",
+    common_mistakes: ["Adding growth to preferred stock", "Using after-tax debt cost", "Assuming all equity has the same required return"]
+  });
+}
+
+function governanceTemplate(rng, difficulty, ordinal) {
+  return makeAdvancedQuestion({
+    id: `adv-governance-${ordinal}`, chapter: "Chapter 9", difficulty, topic: "classified-stock", question_type: "case_study",
+    prompt: `A founder takes a software firm public with Class A shares sold to the public carrying one vote per share and Class B founder shares carrying ten votes per share. Public shares receive the same cash dividend rights. What is the most likely purpose of this structure?`,
+    choices: ["To let founders retain voting control while still raising outside equity.", "To guarantee that public shareholders control the board.", "To make Class B shares legally risk-free.", "To eliminate the firm's cost of equity.", "To make preferred stock convert into debt."],
+    answer: 0,
+    learning_objective: "Interpret classified stock and voting-right implications.",
+    formula_used: "Conceptual common-stock rights",
+    step_by_step_solution: "Dual-class structures separate economic rights from voting control. Public investors can participate economically, while founders keep control through superior voting rights.",
+    concept: "Common stock can have different classes with different voting rights.",
+    common_mistakes: ["Assuming every common share must have identical voting rights", "Confusing classified common stock with preferred stock"]
+  });
+}
+
+function growthSensitivityTemplate(rng, difficulty, ordinal) {
+  const d1 = rand(rng, 90, 210) / 100, rs = rand(rng, 105, 145) / 1000, g1 = rand(rng, 35, 65) / 1000, g2 = g1 + rand(rng, 10, 25) / 1000;
+  const p1 = d1 / (rs - g1), p2 = d1 / (rs - g2);
+  const made = advancedChoiceSet(p2 - p1, money, [p2, p1, (p2 - p1) / 2, d1 / (g2 - g1)], rng);
+  return makeAdvancedQuestion({
+    id: `adv-growth-sens-${ordinal}`, chapter: "Chapter 9", difficulty, topic: "growth-sensitivity", question_type: "what_if",
+    formulaIds: ["constant-growth"],
+    prompt: `A stock will pay D1 = ${money(d1)} and investors require ${pct(rs * 100)}. If the long-run growth assumption rises from ${pct(g1 * 100)} to ${pct(g2 * 100)}, how much does the constant-growth price change?`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Analyze sensitivity of stock value to growth assumptions.",
+    formula_used: "P0 = D1 / (r_s - g)",
+    step_by_step_solution: `Old price = ${money(d1)} / (${pct(rs * 100)} - ${pct(g1 * 100)}) = ${money(p1)}. New price = ${money(d1)} / (${pct(rs * 100)} - ${pct(g2 * 100)}) = ${money(p2)}. Change = ${money(p2 - p1)}.`,
+    concept: "The model becomes very sensitive when growth approaches the required return.",
+    common_mistakes: ["Using g as the discount rate", "Forgetting r_s must be greater than g", "Treating growth changes as dollar changes"]
+  });
+}
+
+function waccFullTemplate(rng, difficulty, ordinal) {
+  const debtV = rand(rng, 20, 55), prefV = rand(rng, 0, 15), equityV = 100 - debtV - prefV;
+  const rdPre = rand(rng, 55, 95) / 10, tax = rand(rng, 21, 30) / 100, rp = rand(rng, 75, 105) / 10, re = rand(rng, 105, 145) / 10;
+  const wacc = (debtV / 100) * rdPre * (1 - tax) + (prefV / 100) * rp + (equityV / 100) * re;
+  const made = advancedChoiceSet(wacc, pct, [(debtV / 100) * rdPre + (prefV / 100) * rp + (equityV / 100) * re, (debtV / 100) * rdPre * tax + (prefV / 100) * rp + (equityV / 100) * re, re, rdPre], rng);
+  return makeAdvancedQuestion({
+    id: `adv-wacc-full-${ordinal}`, chapter: "Chapter 10", difficulty, topic: "wacc", question_type: "numeric_calculation",
+    formulaIds: ["wacc"],
+    prompt: `${pick(rng, companyNames)} uses market-value weights of ${debtV}% debt, ${prefV}% preferred, and ${equityV}% common equity. Its before-tax debt cost is ${pct(rdPre)}, tax rate is ${pct(tax * 100)}, preferred cost is ${pct(rp)}, and common equity cost is ${pct(re)}. What WACC should be used for average-risk capital budgeting?`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Calculate full WACC using market weights and the debt tax shield.",
+    formula_used: "WACC = w_d r_d(1-T) + w_p r_p + w_s r_s",
+    step_by_step_solution: `After-tax debt cost = ${pct(rdPre)}(1 - ${pct(tax * 100)}) = ${pct(rdPre * (1 - tax))}. WACC = .${debtV}(${pct(rdPre * (1 - tax))}) + .${prefV}(${pct(rp)}) + .${equityV}(${pct(re)}) = ${pct(wacc)}.`,
+    concept: "Only debt receives the tax adjustment; preferred and common equity do not.",
+    common_mistakes: ["Forgetting the debt tax shield", "Using book weights instead of market weights", "Tax-adjusting preferred dividends"]
+  });
+}
+
+function costEquityMethodsTemplate(rng, difficulty, ordinal) {
+  const rf = rand(rng, 35, 55) / 10, mrp = rand(rng, 55, 80) / 10, beta = rand(rng, 85, 145) / 100;
+  const d1 = rand(rng, 120, 240) / 100, p0 = rand(rng, 24, 52), g = rand(rng, 30, 58) / 1000;
+  const capm = rf + beta * mrp, dcf = d1 / p0 * 100 + g * 100;
+  return makeAdvancedQuestion({
+    id: `adv-equity-methods-${ordinal}`, chapter: "Chapter 10", difficulty, topic: "cost-of-equity", question_type: "case_study",
+    formulaIds: ["capm", "returns-breakout"],
+    prompt: `A public firm estimates equity cost using CAPM and DCF. Inputs: rRF ${pct(rf)}, market risk premium ${pct(mrp)}, beta ${beta.toFixed(2)}, D1 ${money(d1)}, P0 ${money(p0)}, and long-run g ${pct(g * 100)}. Which pair is closest to CAPM cost of equity and DCF cost of equity?`,
+    choices: [`CAPM ${pct(capm)}; DCF ${pct(dcf)}`, `CAPM ${pct(rf + mrp)}; DCF ${pct(g * 100)}`, `CAPM ${pct(beta * mrp)}; DCF ${pct(d1 / p0 * 100)}`, `CAPM ${pct(capm + g * 100)}; DCF ${pct(dcf - g * 100)}`, `CAPM ${pct(rf + beta)}; DCF ${money(d1 / (capm / 100 - g))}`],
+    answer: 0,
+    learning_objective: "Compare CAPM and DCF estimates of common equity cost.",
+    formula_used: "CAPM and DCF r_s = D1/P0 + g",
+    step_by_step_solution: `CAPM = ${pct(rf)} + ${beta.toFixed(2)}(${pct(mrp)}) = ${pct(capm)}. DCF = ${money(d1)} / ${money(p0)} + ${pct(g * 100)} = ${pct(dcf)}.`,
+    concept: "Real firms often compare several cost-of-equity estimates rather than relying on one input set.",
+    common_mistakes: ["Forgetting beta in CAPM", "Using D0 instead of D1", "Reporting only dividend yield as DCF cost"]
+  });
+}
+
+function financingStrategyTemplate(rng, difficulty, ordinal) {
+  return makeAdvancedQuestion({
+    id: `adv-financing-strategy-${ordinal}`, chapter: "Chapter 10", difficulty, topic: "capital-structure", question_type: "scenario_analysis",
+    prompt: `${pick(rng, companyNames)} is considering funding an average-risk expansion with much more debt than its target capital structure. Management argues WACC must fall because debt has the lowest quoted cost. What is the strongest response?`,
+    choices: ["Debt is always cheapest, so WACC must fall with more borrowing.", "The tax shield helps, but extra leverage can raise debt and equity required returns, so WACC may not fall.", "Use the coupon rate on old debt as the project discount rate.", "Preferred stock should be tax-adjusted before debt.", "Book-value weights eliminate leverage risk."],
+    answer: 1,
+    learning_objective: "Interpret capital-structure changes and WACC constraints.",
+    formula_used: "WACC judgment and leverage risk",
+    step_by_step_solution: "Debt has a tax advantage, but higher leverage increases financial risk. Investors may demand higher returns on debt and equity, so WACC depends on the full financing mix and target structure.",
+    concept: "For capital budgeting, WACC should reflect the target capital structure and project risk, not just the cheapest financing source.",
+    common_mistakes: ["Choosing the lowest component cost as the discount rate", "Ignoring leverage effects", "Using book weights mechanically"]
+  });
+}
+
+function discountRateChoiceTemplate(rng, difficulty, ordinal) {
+  return makeAdvancedQuestion({
+    id: `adv-discount-rate-${ordinal}`, chapter: "Chapter 10", difficulty, topic: "project-discount-rate", question_type: "comparison",
+    prompt: `A stable food company with WACC 8.8% considers acquiring a speculative biotech patent. The patent's cash flows are much riskier than the firm's normal projects. Which discount-rate choice is best?`,
+    choices: ["Use 8.8% because WACC is the companywide cost of capital.", "Use a rate above 8.8% because project risk is above the firm's average risk.", "Use the after-tax debt cost because acquisitions are financed with debt.", "Use the risk-free rate because patents have no coupon payments.", "Use IRR as the discount rate before computing NPV."],
+    answer: 1,
+    learning_objective: "Choose the appropriate discount rate for non-average-risk projects.",
+    formula_used: "Risk-adjusted WACC reasoning",
+    step_by_step_solution: "Company WACC is appropriate for average-risk projects that match the firm's existing business. A riskier patent should be discounted at a higher required return.",
+    concept: "Discount rates should match asset risk, not simply the financing label.",
+    common_mistakes: ["Using company WACC for every project", "Using the cheapest financing source", "Confusing IRR with the discount rate"]
+  });
+}
+
+function capitalBudgetingCaseTemplate(rng, difficulty, ordinal) {
+  const cost = rand(rng, 850, 1600) * 1000, wc = rand(rng, 80, 180) * 1000, sales = rand(rng, 620, 920) * 1000, costs = rand(rng, 310, 520) * 1000;
+  const dep = cost / 4, tax = rand(rng, 21, 30) / 100, wacc = rand(rng, 85, 125) / 1000, terminal = rand(rng, 130, 260) * 1000;
+  const ocf = (sales - costs - dep) * (1 - tax) + dep;
+  const cfs = [-(cost + wc), ocf, ocf, ocf, ocf + wc + terminal * (1 - tax)];
+  const projectNpv = npv(wacc, cfs);
+  const made = advancedChoiceSet(projectNpv, money, [npv(wacc, [-cost, ocf, ocf, ocf, ocf + terminal]), npv(wacc, [-(cost + wc), sales - costs, sales - costs, sales - costs, sales - costs + wc]), projectNpv * -1, projectNpv * 1.2], rng);
+  return makeAdvancedQuestion({
+    id: `adv-npv-case-${ordinal}`, chapter: "Chapter 11", difficulty, topic: "incremental-cash-flow-npv", question_type: "case_study",
+    formulaIds: ["npv"],
+    prompt: `${pick(rng, companyNames)} is evaluating equipment costing ${money(cost)} plus immediate working capital of ${money(wc)}. Annual sales are ${money(sales)}, cash operating costs are ${money(costs)}, straight-line depreciation is ${money(dep)} for 4 years, tax rate is ${pct(tax * 100)}, WACC is ${pct(wacc * 100)}, and after-tax salvage value in year 4 is ${money(terminal * (1 - tax))}. Working capital is recovered at the end.\nPart A: identify the initial outlay. Part B: compute annual OCF. Part C: choose the NPV.`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Build project cash flows including depreciation tax shield, working capital, and terminal recovery.",
+    formula_used: "OCF = (Sales - Costs - Dep)(1-T) + Dep; NPV",
+    step_by_step_solution: `Initial cash flow = -(${money(cost)} + ${money(wc)}) = ${money(cfs[0])}. OCF = (${money(sales)} - ${money(costs)} - ${money(dep)})(1 - ${pct(tax * 100)}) + ${money(dep)} = ${money(ocf)}. Final year adds working capital recovery and after-tax salvage, so NPV at ${pct(wacc * 100)} = ${money(projectNpv)}.`,
+    concept: "Capital budgeting uses incremental after-tax cash flows, not accounting profit alone.",
+    common_mistakes: ["Forgetting working capital recovery", "Ignoring depreciation tax shields", "Including sales without operating costs"]
+  });
+}
+
+function npvIrrConflictTemplate(rng, difficulty, ordinal) {
+  const rate = rand(rng, 85, 125) / 1000;
+  const a = [-1000, 720, 520, 240], b = [-1000, 120, 420, 920];
+  const npvA = npv(rate, a), npvB = npv(rate, b), irrA = irr(a) * 100, irrB = irr(b) * 100;
+  return makeAdvancedQuestion({
+    id: `adv-npv-irr-conflict-${ordinal}`, chapter: "Chapter 11", difficulty, topic: "npv-irr-conflict", question_type: "comparison",
+    formulaIds: ["npv", "irr"],
+    prompt: `Two mutually exclusive projects each cost $1,000. Project A returns $720, $520, and $240. Project B returns $120, $420, and $920. At WACC ${pct(rate * 100)}, A has NPV ${money(npvA)} and IRR ${pct(irrA)}; B has NPV ${money(npvB)} and IRR ${pct(irrB)}. Which project should be chosen?`,
+    choices: ["Choose the higher IRR project no matter what.", "Choose the higher NPV project because the projects are mutually exclusive.", "Reject both because their costs are equal.", "Choose the project with faster payback only.", "Average the IRRs and accept both."],
+    answer: 1,
+    learning_objective: "Resolve NPV versus IRR conflicts for mutually exclusive projects.",
+    formula_used: "NPV rule and IRR rule",
+    step_by_step_solution: `For mutually exclusive projects, choose the project that adds more dollar value. Compare NPV: A = ${money(npvA)}, B = ${money(npvB)}. The higher-NPV project is preferred even if IRR tells a different story.`,
+    concept: "IRR is a rate; NPV is dollar value added. Mutually exclusive choices should maximize value.",
+    common_mistakes: ["Ranking only by IRR", "Ignoring project scale and timing", "Accepting both mutually exclusive projects"]
+  });
+}
+
+function replacementProjectTemplate(rng, difficulty, ordinal) {
+  const newCost = rand(rng, 700, 1200) * 1000, oldSale = rand(rng, 120, 260) * 1000, oldBook = oldSale + rand(rng, 40, 130) * 1000;
+  const tax = rand(rng, 21, 30) / 100, savings = rand(rng, 210, 360) * 1000, dep = newCost / 5, wacc = rand(rng, 85, 120) / 1000;
+  const initial = -newCost + oldSale + (oldBook - oldSale) * tax;
+  const ocf = (savings - dep) * (1 - tax) + dep;
+  const projectNpv = npv(wacc, [initial, ocf, ocf, ocf, ocf, ocf]);
+  const made = advancedChoiceSet(projectNpv, money, [npv(wacc, [-newCost, savings, savings, savings, savings, savings]), npv(wacc, [initial, savings, savings, savings, savings, savings]), projectNpv - oldSale, -projectNpv], rng);
+  return makeAdvancedQuestion({
+    id: `adv-replacement-${ordinal}`, chapter: "Chapter 11", difficulty, topic: "replacement-analysis", question_type: "expert_case",
+    formulaIds: ["npv"],
+    prompt: `Replacement analysis: new equipment costs ${money(newCost)}. The old machine can be sold today for ${money(oldSale)} and has book value ${money(oldBook)}. Annual pre-tax cost savings are ${money(savings)} for 5 years. New depreciation is ${money(dep)} per year, tax rate is ${pct(tax * 100)}, and WACC is ${pct(wacc * 100)}. Ignore terminal salvage.\nPart A: calculate the after-tax initial investment. Part B: calculate annual incremental OCF. Part C: choose the replacement NPV.`,
+    choices: made.choices, answer: made.answer,
+    learning_objective: "Handle opportunity cost, tax effect on sale of old asset, and depreciation tax shield.",
+    formula_used: "Replacement NPV incremental cash flows",
+    step_by_step_solution: `Initial flow = -new cost + old sale proceeds + tax shield on loss = -${money(newCost)} + ${money(oldSale)} + (${money(oldBook)} - ${money(oldSale)})(${pct(tax * 100)}) = ${money(initial)}. Annual OCF = (${money(savings)} - ${money(dep)})(1 - ${pct(tax * 100)}) + ${money(dep)} = ${money(ocf)}. NPV = ${money(projectNpv)}.`,
+    concept: "The old asset's sale value is an opportunity cost and tax effects on disposal are incremental.",
+    common_mistakes: ["Ignoring the old machine sale", "Using book value as cash flow", "Forgetting depreciation tax shield"]
+  });
+}
+
+function sunkCostTrapTemplate(rng, difficulty, ordinal) {
+  return makeAdvancedQuestion({
+    id: `adv-sunk-cost-${ordinal}`, chapter: "Chapter 11", difficulty, topic: "incremental-cash-flows", question_type: "error_identification",
+    prompt: `${pick(rng, companyNames)} spent $180,000 last year on a feasibility study. A proposed project now requires new equipment, increases inventory, and is expected to reduce sales of an existing product. Which item should NOT be included as an incremental project cash flow?`,
+    choices: ["The feasibility study already paid last year.", "The upfront equipment cost.", "The increase in inventory required to operate the project.", "The lost contribution margin from cannibalized existing sales.", "The terminal recovery of working capital."],
+    answer: 0,
+    learning_objective: "Separate sunk costs from incremental costs, opportunity costs, and cannibalization.",
+    formula_used: "Incremental cash flow rules",
+    step_by_step_solution: "The feasibility study is a sunk cost because it already occurred and cannot be changed by accepting or rejecting the project. Equipment, working capital, cannibalization, and working capital recovery are incremental.",
+    concept: "Capital budgeting should include only future cash flows that change because of the decision.",
+    common_mistakes: ["Including sunk costs", "Ignoring cannibalization", "Forgetting terminal working capital recovery"]
+  });
+}
+
+function generateAdvancedTest(options = {}) {
+  const rng = createRng(options.seed || state.generationSeed || `${Date.now()}-${Math.random()}`);
+  const count = Math.max(5, Math.min(40, Number(options.count || state.generatedCount) || 22));
+  const templates = financeTemplates();
+  const used = new Set();
+  const targetChapters = ["Chapter 7", "Chapter 8", "Chapter 9", "Chapter 10", "Chapter 11"];
+  const questions = [];
+  let guard = 0;
+  while (questions.length < count && guard < count * 8) {
+    guard += 1;
+    const weakTopics = Object.entries(state.weakConcepts || {}).sort((a, b) => b[1] - a[1]).map(([topic]) => topic);
+    const difficulty = selectGeneratedDifficulty(rng);
+    let template = pick(rng, templates);
+    if (weakTopics.length && rng() < 0.35) {
+      const matched = templates.filter(fn => weakTopics.some(topic => fn.name.toLowerCase().includes(topic.split("-")[0])));
+      if (matched.length) template = pick(rng, matched);
+    }
+    const candidate = template(rng, difficulty, questions.length + 1);
+    const signature = `${candidate.chapter}|${candidate.topic}|${candidate.question_type}`;
+    if (used.has(signature) && questions.length < templates.length) continue;
+    used.add(signature);
+    questions.push(candidate);
+  }
+  const chapterMissing = targetChapters.filter(ch => !questions.some(q => q.chapter === ch));
+  chapterMissing.forEach(chapter => {
+    const template = templates.find(fn => {
+      const q = fn(createRng(`${chapter}-probe`), "Medium", 99);
+      return q.chapter === chapter;
+    });
+    if (template && questions.length < count) questions.push(template(rng, "Medium", questions.length + 1));
+  });
+  return seededShuffle(questions.slice(0, count), rng).map((q, i) => ({ ...q, id: `${q.id}-${i + 1}` }));
 }
 
 function generateTest() {
@@ -856,6 +1348,11 @@ function generateTest() {
 
   return [q1, q2, q3, fixed[0], q5, q6, fixed[1], fixed[2], q9, q10, q11, q12, fixed[3], fixed[4], q15, q16, q17, fixed[5], fixed[6], q20, q21, fixed[7], q33, q34, q35, q36, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32];
 }
+
+const generateLegacyTest = generateTest;
+generateTest = function generateProfessionalPracticeSet(options = {}) {
+  return generateAdvancedTest(options);
+};
 
 function getQuestionsForKind(kind) {
   if (kind === "generated") return state.generated;
@@ -1032,6 +1529,17 @@ function formulaLinks(ids, returnKind = null) {
   }).join(" ")}</p>`;
 }
 
+function renderQuestionSolution(q, kind, weak) {
+  const learning = q.learning_objective ? `<p><strong>Learning objective:</strong> ${escHtml(q.learning_objective)}</p>` : "";
+  const formula = q.formula_used ? `<p><strong>Formula used:</strong> ${formatText(q.formula_used)}</p>` : "";
+  const steps = q.step_by_step_solution ? `<p><strong>Step-by-step:</strong> ${formatText(q.step_by_step_solution)}</p>` : `<p>${formatText(q.solution || "")}</p>`;
+  const concept = q.explanation && q.explanation !== q.step_by_step_solution ? `<p><strong>Concept:</strong> ${formatText(q.explanation)}</p>` : "";
+  const mistakes = q.common_mistakes?.length ? `<div><strong>Common mistakes:</strong><ul>${q.common_mistakes.map(item => `<li>${escHtml(item)}</li>`).join("")}</ul></div>` : "";
+  const wrong = q.choice_explanations?.length ? `<div><strong>Why the other answers miss:</strong><ul>${q.choice_explanations.map(item => `<li>${escHtml(item)}</li>`).join("")}</ul></div>` : "";
+  const tags = q.tags?.length ? `<p class="muted">Tags: ${q.tags.map(escHtml).join(", ")}</p>` : "";
+  return `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds, kind)}<div class="solution-body">${learning}${formula}${steps}${concept}${mistakes}${wrong}${tags}</div><div class="action-row"><button type="button" class="secondary" onclick="showSimilarQuestions('${kind}')">Show me similar questions</button><button type="button" class="secondary" onclick="toggleWeakQuestion('${q.id}')">${weak ? "Remove from review" : "Bookmark for review"}</button></div><p class="muted">Source tag: ${q.source}</p></div>`;
+}
+
 function renderCustomSelect(id, selectedLabel, options) {
   return `
     <details class="custom-select" id="${id}">
@@ -1143,7 +1651,9 @@ function renderQuiz(kind) {
   if (!questions) {
     const countOptions = [5, 10, 15, 20, 25, 30, 32].map(n => ({ label: `${n} questions`, value: String(n) }));
     const activeCount = countOptions.find(option => Number(option.value) === state.generatedCount) || countOptions[3];
-    return `<section class="panel stack"><h2 class="page-title">Practice Test</h2><p class="muted">Create a fresh exam mirrored from the original sample and midterm sample tests.</p><div class="filter-row"><span class="filter-label">Questions</span>${renderCustomSelect("generatedCountEmpty", activeCount.label, countOptions.map(option => ({ ...option, selected: Number(option.value) === state.generatedCount, action: `setGeneratedCount('${option.value}')` })))}</div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
+    const difficultyOptions = ["Adaptive", ...difficultyLevels].map(level => ({ label: level, value: level }));
+    const activeDifficulty = difficultyOptions.find(option => option.value === state.generatedDifficulty) || difficultyOptions[0];
+    return `<section class="panel stack"><h2 class="page-title">Practice Test</h2><p class="muted">Create a fresh certification-style practice set with cases, traps, multi-step calculations, and adaptive remediation across Chapters 7-11.</p><div class="filter-row"><span class="filter-label">Questions</span>${renderCustomSelect("generatedCountEmpty", activeCount.label, countOptions.map(option => ({ ...option, selected: Number(option.value) === state.generatedCount, action: `setGeneratedCount('${option.value}')` })))}</div><div class="filter-row"><span class="filter-label">Difficulty</span>${renderCustomSelect("generatedDifficultyEmpty", activeDifficulty.label, difficultyOptions.map(option => ({ ...option, selected: option.value === state.generatedDifficulty, action: `setGeneratedDifficulty('${option.value}')` })))}</div><button type="button" class="primary" onclick="startGenerated()">Generate test</button></section>`;
   }
   const q = questions[run.index];
   const weak = !!state.weakQuestions[q.id];
@@ -1177,6 +1687,8 @@ function renderQuiz(kind) {
     value: String(n)
   }));
   const activeCount = countOptions.find(option => Number(option.value) === state.generatedCount) || countOptions[3];
+  const difficultyOptions = ["Adaptive", ...difficultyLevels].map(level => ({ label: level, value: level }));
+  const activeDifficulty = difficultyOptions.find(option => option.value === state.generatedDifficulty) || difficultyOptions[0];
   const filterRow = kind === "sample" ? `
     <div class="filter-row">
       <span class="filter-label">Focus</span>
@@ -1192,6 +1704,12 @@ function renderQuiz(kind) {
         ...option,
         selected: Number(option.value) === state.generatedCount,
         action: `setGeneratedCount('${option.value}')`
+      })))}
+      <span class="filter-label">Difficulty</span>
+      ${renderCustomSelect("generatedDifficulty", activeDifficulty.label, difficultyOptions.map(option => ({
+        ...option,
+        selected: option.value === state.generatedDifficulty,
+        action: `setGeneratedDifficulty('${option.value}')`
       })))}
       <button type="button" class="secondary" onclick="startGenerated()">Generate set</button>
     </div>` : "";
@@ -1210,8 +1728,8 @@ function renderQuiz(kind) {
         <div class="quiz-main">
           <article class="question-panel" aria-labelledby="questionHeading">
             <h2 id="questionHeading" class="visually-hidden">Question ${run.index + 1}</h2>
-            <div class="question-meta"><span>${q.source}</span><span>${q.type}</span>${weak ? `<span class="badge">Review Queue</span>` : ""}</div>
-            <p class="question-text" id="qtext-${q.id}">${q.prompt}</p>
+            <div class="question-meta"><span>${q.source}</span><span>${normalizeQuestionType(q.question_type || q.type)}</span>${q.difficulty ? `<span class="badge">${q.difficulty}</span>` : ""}${q.estimated_time ? `<span>${q.estimated_time}</span>` : ""}${weak ? `<span class="badge">Review Queue</span>` : ""}</div>
+            <p class="question-text" id="qtext-${q.id}">${formatText(q.prompt)}</p>
             <div class="choices" role="group" aria-label="Answer choices for this question" aria-labelledby="qtext-${q.id}">
               ${q.choices.map((choice, i) => {
                 const letter = String.fromCharCode(97 + i);
@@ -1221,7 +1739,7 @@ function renderQuiz(kind) {
                 return `<button type="button" class="${cls}" onclick="chooseAnswer('${kind}', ${i})" aria-label="Choice ${letter}: ${escAttr(choice)}">${letter}. ${choice}</button>`;
               }).join("")}
             </div>
-            ${solved ? `<div class="solution" role="region" aria-label="Worked solution"><h3>Worked Solution</h3>${formulaLinks(q.formulaIds, kind)}<div class="solution-body"><p>${q.solution}</p></div><div class="action-row"><button type="button" class="secondary" onclick="showSimilarQuestions('${kind}')">Show me similar questions</button><button type="button" class="secondary" onclick="toggleWeakQuestion('${q.id}')">${weak ? "Remove from review" : "Bookmark for review"}</button></div><p class="muted">Source tag: ${q.source}</p></div>` : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
+            ${solved ? renderQuestionSolution(q, kind, weak) : `<p class="muted">Incorrect selections stay marked until you choose the correct answer. The solution unlocks only after the right choice.</p>`}
           </article>
         </div>
         ${formulaOpen ? renderQuizFormulaSheet() : ""}
@@ -1245,10 +1763,17 @@ function chooseAnswer(kind, index) {
   if (index === q.answer) {
     run.solved[q.id] = true;
     delete run.wrong[q.id];
+    const topicKey = q.topic || q.type;
+    state.adaptiveMastery[topicKey] = (state.adaptiveMastery[topicKey] || 0) + 1;
+    if ((run.attempts[q.id] || 0) === 1 && state.weakConcepts[topicKey]) {
+      state.weakConcepts[topicKey] = Math.max(0, state.weakConcepts[topicKey] - 1);
+    }
   } else {
     const prev = run.wrong[q.id] || [];
     if (!prev.includes(index)) run.wrong[q.id] = [...prev, index];
     state.weakQuestions[q.id] = true;
+    const topicKey = q.topic || q.type;
+    state.weakConcepts[topicKey] = (state.weakConcepts[topicKey] || 0) + 1;
   }
   saveState();
   render();
@@ -1316,16 +1841,14 @@ function setGeneratedCount(value) {
   render();
 }
 
+function setGeneratedDifficulty(value) {
+  state.generatedDifficulty = ["Adaptive", ...difficultyLevels].includes(value) ? value : "Adaptive";
+  saveState();
+  render();
+}
+
 function startGenerated() {
-  const pool = generateTest();
-  const midtermPool = pool.filter(q => q.source.startsWith("Midterm sample"));
-  const finalPool = pool.filter(q => !q.source.startsWith("Midterm sample"));
-  const midtermCount = Math.max(1, Math.round(state.generatedCount * 0.2));
-  const finalCount = state.generatedCount - midtermCount;
-  state.generated = shuffle([
-    ...shuffle(finalPool).slice(0, finalCount),
-    ...shuffle(midtermPool).slice(0, midtermCount)
-  ]);
+  state.generated = generateTest({ count: state.generatedCount, seed: state.generationSeed || undefined });
   state.generatedRun = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   saveState();
   routeTo("generate");
@@ -1389,6 +1912,11 @@ function typeRows() {
 function renderPerformanceDashboard() {
   const chapterRows = performanceRows();
   const questionTypeRows = typeRows();
+  const weakRows = Object.entries(state.weakConcepts || {})
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([label, count]) => ({ label: normalizeQuestionType(label), total: count, solved: 0, attempts: count }));
   const renderRows = rows => rows.map(row => {
     const pctDone = row.total ? Math.round(row.solved / row.total * 100) : 0;
     return `<div class="dashboard-row"><span>${row.label}</span><strong>${row.solved}/${row.total}</strong><small>${row.attempts} attempts</small><div class="mini-meter" aria-label="${pctDone}% solved"><span style="width:${pctDone}%"></span></div></div>`;
@@ -1408,6 +1936,7 @@ function renderPerformanceDashboard() {
           <h3>By Question Type</h3>
           ${renderRows(questionTypeRows)}
         </div>
+        ${weakRows.length ? `<div><h3>Weak Concepts</h3>${renderRows(weakRows)}</div>` : ""}
       </div>
     </section>`;
 }

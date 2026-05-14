@@ -801,6 +801,7 @@ body.dark .accuracy-bar {
   position: relative;
   z-index: 0;
   overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 .choices {
   display: grid;
@@ -862,6 +863,13 @@ body.page-transition .choice:nth-child(5) {
   animation: fadeUp 0.35s ease;
   position: relative;
   z-index: 1;
+}
+.solution-body ul {
+  margin: 0.4rem 0 0.75rem 1.1rem;
+  padding: 0;
+}
+.solution-body li {
+  margin: 0.2rem 0;
 }
 @keyframes fadeUp {
   from {
