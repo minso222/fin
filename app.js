@@ -619,22 +619,66 @@ const sampleQuestions = [
 
 const ac300Questions = [
   // ─── Chapter 1 ───────────────────────────────────────────────────────────────
-  { id: "ac1_01", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q9",
+  { id: "ac1_01", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The primary purpose of financial accounting is to:",
+    choices: ["Assist managers with internal planning and budgeting.", "Provide useful financial information to external users such as investors and creditors.", "Minimize the company's income tax liability.", "Establish internal controls over financial reporting."],
+    answer: 1, solution: "Financial accounting's primary purpose is to provide decision-useful information to external users—investors and creditors—so they can make informed economic decisions. Internal planning and budgeting are the domain of managerial accounting." },
+  { id: "ac1_02", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "Generally Accepted Accounting Principles (GAAP) are best described as:",
+    choices: ["Tax rules established by the IRS for reporting corporate income.", "A uniform set of rules and standards governing how financial statements are prepared in the U.S.", "Optional guidelines that companies may choose to follow.", "International standards issued by the IASB."],
+    answer: 1, solution: "GAAP is the body of rules, standards, and conventions that governs financial statement preparation in the U.S. Public companies are required by the SEC to follow GAAP." },
+  { id: "ac1_03", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The primary private-sector body responsible for establishing U.S. GAAP is the:",
+    choices: ["Securities and Exchange Commission (SEC).", "American Institute of CPAs (AICPA).", "Financial Accounting Standards Board (FASB).", "International Accounting Standards Board (IASB)."],
+    answer: 2, solution: "The FASB is the primary private-sector standard-setter of U.S. GAAP. The SEC has statutory authority but delegates standard-setting to the FASB. The IASB sets IFRS (used internationally), and the AICPA plays a supporting role." },
+  { id: "ac1_04", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The FASB's conceptual framework for financial reporting is primarily designed to:",
+    choices: ["Establish tax rules for all business entities.", "Provide a coherent system of concepts that guides the development of accounting standards.", "Replace authoritative GAAP when specific guidance is missing.", "Define the legal duties of external auditors."],
+    answer: 1, solution: "The conceptual framework provides a foundation of concepts that guides the FASB in developing consistent, principles-based standards. It is not itself authoritative GAAP but helps resolve accounting issues not directly addressed by existing standards." },
+  { id: "ac1_05", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The two FUNDAMENTAL qualitative characteristics of useful financial information are:",
+    choices: ["Comparability and verifiability.", "Timeliness and understandability.", "Relevance and faithful representation.", "Materiality and neutrality."],
+    answer: 2, solution: "Relevance and faithful representation are the two fundamental qualitative characteristics. Information is relevant if it can influence a decision; it is faithfully represented when complete, neutral, and free from material error." },
+  { id: "ac1_06", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "Which of the following is an ENHANCING qualitative characteristic of useful financial information?",
+    choices: ["Relevance.", "Faithful representation.", "Comparability.", "Materiality."],
+    answer: 2, solution: "The four enhancing qualitative characteristics are comparability, verifiability, timeliness, and understandability. They enhance information that is already relevant and faithfully represented. Relevance and faithful representation are the fundamental (not enhancing) characteristics; materiality is a pervasive constraint." },
+  { id: "ac1_07", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q9",
     prompt: "The income statement summarizes the operating activity of a company at a particular point in time.",
     choices: ["True.", "False."],
-    answer: 1, solution: "False. The income statement covers a PERIOD of time (e.g., 'For the Year Ended December 31'). The balance sheet is the snapshot at a specific point in time; the income statement spans a reporting period." },
-  { id: "ac1_02", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q10",
+    answer: 1, solution: "False. The income statement covers a PERIOD of time (e.g., 'For the Year Ended December 31'). The balance sheet reports position at a specific point in time. Income statements, statements of cash flows, and statements of shareholders' equity all cover a period." },
+  { id: "ac1_08", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q10",
     prompt: "Operating items include revenues and expenses directly related to the primary revenue-generating activities of the company.",
     choices: ["True.", "False."],
-    answer: 0, solution: "True. Operating items on the income statement include revenues and expenses from the company's central, ongoing operations—those directly tied to delivering its primary goods or services. Non-operating items (interest, gains/losses on peripheral activities) are presented separately." },
-  { id: "ac1_03", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q12",
+    answer: 0, solution: "True. Operating items include revenues earned and expenses incurred through the company's central, ongoing business activities. Non-operating items—interest expense, gains/losses on peripheral transactions—are presented separately." },
+  { id: "ac1_09", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q12",
     prompt: "The statement of cash flows summarizes transactions that caused cash to change during a reporting period.",
     choices: ["True.", "False."],
-    answer: 0, solution: "True. The statement of cash flows explains how the cash balance changed from the beginning to the end of the period by classifying all cash receipts and payments into operating, investing, and financing activities." },
-  { id: "ac1_04", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q13",
+    answer: 0, solution: "True. The statement of cash flows explains how the cash balance changed from beginning to end of the period by classifying all cash receipts and payments into operating, investing, and financing activities." },
+  { id: "ac1_10", chapter: "Chapter 1", type: "tf", source: "Spiceland Ed.11 T/F Q13",
     prompt: "The statement of shareholders' equity discloses the changes in the temporary shareholders' equity accounts.",
     choices: ["True.", "False."],
-    answer: 1, solution: "False. Shareholders' equity accounts (common stock, additional paid-in capital, retained earnings) are PERMANENT accounts—they carry forward and are never closed at year-end. The statement of shareholders' equity shows changes in these permanent equity components." },
+    answer: 1, solution: "False. Shareholders' equity accounts (common stock, APIC, retained earnings) are PERMANENT accounts—they carry forward and are never closed at year-end. The statement of shareholders' equity shows changes in these permanent equity components during the period." },
+  { id: "ac1_11", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "Which element of the financial statements represents inflows of assets from the entity's PRIMARY, ONGOING operating activities?",
+    choices: ["Gains.", "Revenues.", "Contributions by owners.", "Comprehensive income."],
+    answer: 1, solution: "Revenues arise from the entity's central, ongoing operations (e.g., product sales, service fees). Gains arise from peripheral or incidental transactions. Contributions by owners are equity investments, not income items." },
+  { id: "ac1_12", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "Liabilities are best defined as:",
+    choices: ["Resources owned or controlled by the entity that provide future economic benefits.", "Present obligations requiring a future sacrifice of assets or services as a result of past transactions.", "The owners' residual interest in assets after all liabilities are deducted.", "Outflows of assets arising from the entity's primary operating activities."],
+    answer: 1, solution: "Liabilities are present obligations arising from past transactions that require a future transfer of assets or services. Assets are economic resources; the residual owner interest is equity; outflows from operations are expenses." },
+  { id: "ac1_13", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The primary responsibility of an independent external auditor is to:",
+    choices: ["Prepare the company's financial statements.", "Set new accounting standards on behalf of the FASB.", "Express an opinion on whether financial statements are fairly presented in conformity with GAAP.", "Guarantee the financial statements are free from all errors and fraud."],
+    answer: 2, solution: "External auditors independently examine financial statements and issue an opinion on whether they are fairly presented in all material respects in conformity with GAAP. Management prepares the statements. Auditors provide reasonable assurance, not a guarantee of zero errors or fraud." },
+  { id: "ac1_14", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "The FASB Accounting Standards Codification (ASC) is:",
+    choices: ["International standards issued by the IASB.", "The single authoritative source of nongovernmental U.S. GAAP.", "A regulatory framework applied only to SEC-registered companies.", "An optional set of best-practice guidelines for private companies."],
+    answer: 1, solution: "Effective in 2009, the FASB ASC is the single authoritative source of U.S. GAAP for all nongovernmental entities. All prior FASB standards and other authoritative guidance were reorganized into the Codification." },
+  { id: "ac1_15", chapter: "Chapter 1", type: "theory", source: "Spiceland Ed.11 – Ch.1",
+    prompt: "Disclosure notes to the financial statements are considered an integral part of a complete set of financial statements because they:",
+    choices: ["Replace the body of financial statements for sophisticated users.", "Provide additional information that cannot be fully expressed in the dollar amounts of the statements.", "Are required only when the company reports a net loss.", "Summarize the external auditor's opinion and findings."],
+    answer: 1, solution: "Disclosure notes supplement the financial statement numbers with information that cannot be captured in dollar amounts alone—accounting policies, details of long-term obligations, contingent liabilities, subsequent events, and more." },
 
   // ─── Chapter 2 ───────────────────────────────────────────────────────────────
   { id: "ac2_01", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q1",
@@ -645,180 +689,120 @@ const ac300Questions = [
     prompt: "Debits increase asset accounts and decrease liability accounts.",
     choices: ["True.", "False."],
     answer: 0, solution: "True. Debits (left-side entries) increase assets and expenses, and decrease liabilities, equity, and revenues. Credits do the opposite. This is the foundation of double-entry accounting." },
-  { id: "ac2_03", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q4",
-    prompt: "After an unadjusted trial balance is prepared, the next step in the accounting processing cycle is the preparation of financial statements.",
-    choices: ["True.", "False."],
-    answer: 1, solution: "False. The next step after the unadjusted trial balance is to record ADJUSTING JOURNAL ENTRIES. Only after adjusting entries are posted and an adjusted trial balance is prepared can financial statements be prepared." },
-  { id: "ac2_04", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q5",
-    prompt: "Adjusting journal entries are recorded at the end of any period when financial statements are prepared.",
-    choices: ["True.", "False."],
-    answer: 0, solution: "True. Adjusting entries are made at the end of each accounting period to ensure revenues are recognized when earned and expenses when incurred under the accrual basis, regardless of cash flow timing." },
+  { id: "ac2_03", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 – Ch.2",
+    prompt: "The two major recognition principles under accrual accounting are:",
+    choices: ["The cost principle and the going-concern principle.", "The revenue recognition principle and the expense recognition (matching) principle.", "The historical-cost principle and the full-disclosure principle.", "The materiality principle and the comparability principle."],
+    answer: 1, solution: "Accrual accounting rests on two recognition principles: (1) the revenue recognition principle—recognize revenue when earned (performance obligation satisfied), and (2) the expense recognition (matching) principle—recognize expenses in the same period as the revenues they helped generate." },
+  { id: "ac2_04", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q21",
+    prompt: "The equation that shows a company's total economic resources equal claims to those resources by creditors and owners is:",
+    choices: ["Revenues - Expenses = Net Income.", "Cash Increases - Cash Decreases = Change in Cash.", "Common Stock + Retained Earnings = Shareholders' Equity.", "Assets = Liabilities + Shareholders' Equity."],
+    answer: 3, solution: "Assets = Liabilities + Shareholders' Equity is the accounting equation. Assets represent total economic resources; liabilities are creditors' claims and shareholders' equity represents owners' claims on those resources." },
   { id: "ac2_05", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q6",
     prompt: "Accruals occur when the cash flow precedes either revenue or expense recognition.",
     choices: ["True.", "False."],
     answer: 1, solution: "False. This describes DEFERRALS (prepayments), not accruals. Accruals occur when revenue is earned or an expense is incurred BEFORE cash changes hands (e.g., accrued wages payable, accrued interest receivable)." },
-  { id: "ac2_06", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q7",
-    prompt: "Some companies prefer to record external transactions involving prepayments directly into an expense or revenue account rather than creating an asset or liability at the time of the prepayment.",
-    choices: ["True.", "False."],
-    answer: 0, solution: "True. Both approaches are acceptable under GAAP. A company may debit an expense account instead of a prepaid asset when paying for a future benefit; a year-end adjusting entry then shifts the unexpired portion to a prepaid asset. Reversing entries at the start of the next period are commonly used with this approach." },
-  { id: "ac2_07", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q8",
+  { id: "ac2_06", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 – Ch.2",
+    prompt: "On October 1, a company paid $24,000 for a two-year insurance policy and recorded it as Prepaid Insurance. Which type of adjusting entry is required at December 31?",
+    choices: ["An accrued liability.", "A deferred expense (prepaid expense).", "An accrued revenue.", "An estimate adjustment."],
+    answer: 1, solution: "When cash is paid in advance of recognizing the expense, the prepayment is a deferred expense (asset). At year-end, the portion used (3 months of a 24-month policy = $24,000 × 3/24 = $3,000) must be expensed. The adjusting entry debits Insurance Expense and credits Prepaid Insurance—a deferred expense adjustment." },
+  { id: "ac2_07", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 – Ch.2",
+    prompt: "On November 1, a company paid $6,000 for a one-year insurance policy, recording the full amount as Prepaid Insurance. What amount should be recognized as Insurance Expense in the adjusting entry on December 31?",
+    choices: ["$1,000.", "$2,000.", "$6,000.", "$500."],
+    answer: 0, solution: "The policy covers 12 months beginning November 1. By December 31, two months have elapsed (November and December). Expense = $6,000 × 2/12 = $1,000. The adjusting entry: Dr. Insurance Expense $1,000 / Cr. Prepaid Insurance $1,000." },
+  { id: "ac2_08", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q8",
     prompt: "The adjusted trial balance contains only permanent accounts.",
     choices: ["True.", "False."],
     answer: 1, solution: "False. The ADJUSTED trial balance contains both temporary accounts (revenues, expenses, dividends) and permanent accounts (assets, liabilities, equity). It is the POST-CLOSING trial balance that contains only permanent accounts, after temporary accounts are closed." },
-  { id: "ac2_08", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q14",
-    prompt: "The post-closing trial balance contains only permanent accounts.",
-    choices: ["True.", "False."],
-    answer: 0, solution: "True. After closing entries zero out all temporary accounts (revenues, expenses, dividends), only the permanent accounts (assets, liabilities, retained earnings, and other equity) remain with balances, forming the post-closing trial balance." },
-  { id: "ac2_09", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q15",
-    prompt: "The closing process brings all temporary accounts to a zero balance and updates the balance in the retained earnings account.",
-    choices: ["True.", "False."],
-    answer: 0, solution: "True. Closing entries transfer the balances of all temporary accounts (revenues, expenses, dividends declared) to Retained Earnings, resetting them to zero so each new period begins fresh." },
-  { id: "ac2_10", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q16",
-    prompt: "A reversing entry at the beginning of a period for salaries would include a debit to salaries expense.",
-    choices: ["True.", "False."],
-    answer: 0, solution: "True. When a company uses the approach of initially recording prepayments directly to an expense account, the year-end adjusting entry shifts the unexpired amount to a prepaid asset (crediting the expense). The reversing entry at the start of the next period debits salaries expense and credits the prepaid asset, restoring the original approach." },
-  { id: "ac2_11", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q19",
-    prompt: "The accounting equation can be stated as:",
-    choices: ["A + L - SE = 0.", "A - L + SE = 0.", "-A + L - SE = 0.", "A - L - SE = 0."],
-    answer: 3, solution: "Starting from A = L + SE, rearranging: A − L − SE = 0. This is the only option that correctly reduces to 0 when the equation is in balance." },
-  { id: "ac2_12", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q20",
-    prompt: "The accounting equation can be stated as:",
-    choices: ["A - L = -SE.", "A + L = SE.", "A - L = SE.", "A = L - SE."],
-    answer: 2, solution: "From A = L + SE, subtracting L from both sides gives A − L = SE. Shareholders' equity equals the excess of assets over liabilities—the owners' residual interest." },
-  { id: "ac2_13", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q21",
-    prompt: "The equation that shows a company's total economic resources equal claims to those resources by creditors and owners is:",
-    choices: ["Revenues - Expenses = Net Income.", "Cash Increases - Cash Decreases = Change in Cash.", "Common Stock + Retained Earnings = Shareholders' Equity.", "Assets = Liabilities + Shareholders' Equity."],
-    answer: 3, solution: "Assets = Liabilities + Shareholders' Equity is the accounting equation. Assets represent total economic resources; liabilities are creditors' claims and shareholders' equity represents owners' claims on those resources." },
-  { id: "ac2_14", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q22",
+  { id: "ac2_09", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q22",
     prompt: "When a company pays employees' salaries for the current period, how will the basic accounting equation be affected?",
     choices: ["Shareholders' equity decreases.", "Revenues decrease.", "Expenses decrease.", "Liabilities increase."],
     answer: 0, solution: "Paying salaries: Dr. Salaries Expense, Cr. Cash. The expense reduces net income, which reduces Retained Earnings—a shareholders' equity component. Revenues and liabilities are unaffected." },
-  { id: "ac2_15", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q23",
-    prompt: "When a company declares and then pays shareholders a dividend on the same date, what is the effect on the accounting equation for that company?",
-    choices: ["Decrease shareholders' equity and increase assets.", "Increase liabilities and increase assets.", "Decrease assets and decrease liabilities.", "Decrease assets and decrease shareholders' equity."],
-    answer: 3, solution: "Dr. Retained Earnings (decreases SE), Cr. Cash (decreases assets). There is no effect on liabilities. Both assets and shareholders' equity decrease by the same amount." },
-  { id: "ac2_16", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q24",
-    prompt: "A company sold $500 in inventory to a customer on account on January 1. On January 11, the company collected the cash from that customer. What is the impact on the accounting equation from the collection of cash on January 11?",
-    choices: ["No net effect to the accounting equation.", "Decrease assets and increase liabilities.", "Increase assets and increase liabilities.", "Decrease assets and decrease liabilities."],
-    answer: 0, solution: "Dr. Cash (+asset), Cr. Accounts Receivable (−asset). One asset increases while another decreases by the same amount—no net change to total assets, liabilities, or equity." },
-  { id: "ac2_17", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q25",
+  { id: "ac2_10", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q25",
     prompt: "Which of the following would increase assets and increase liabilities?",
     choices: ["Provide services to customers on account.", "Purchase office supplies on account.", "Pay dividends to shareholders.", "Receive a utility bill for the current month, which is set aside for payment next month."],
     answer: 1, solution: "Purchasing supplies on account: Dr. Supplies (+asset), Cr. Accounts Payable (+liability). Providing services on account increases assets and equity (revenue). Paying dividends decreases assets and equity. Accruing a utility bill increases expenses (reduces equity) and liabilities—not assets." },
-  { id: "ac2_18", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q26",
-    prompt: "An expense has what effect on the accounting equation?",
-    choices: ["Decrease liabilities.", "Decrease shareholders' equity.", "Increase assets.", "No effect on the accounting equation."],
-    answer: 1, solution: "Expenses reduce net income, which reduces Retained Earnings—a component of shareholders' equity. They do not directly decrease liabilities or increase assets." },
-  { id: "ac2_19", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q27",
-    prompt: "Revenues have what effect on the accounting equation?",
-    choices: ["Increase liabilities.", "Decrease assets.", "Increase shareholders' equity.", "No effect."],
-    answer: 2, solution: "Revenues increase net income, which increases Retained Earnings—a component of shareholders' equity. Revenues also typically increase assets (cash or receivables) to keep the equation balanced." },
-  { id: "ac2_20", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q28",
-    prompt: "Investments by shareholders have what effect on the accounting equation?",
-    choices: ["Assets increase and liabilities increase.", "Expenses increase and liabilities increase.", "Assets increase and revenues increase.", "Assets increase and shareholders' equity increases."],
-    answer: 3, solution: "When shareholders invest, the company receives cash (Dr. Cash = +asset) and records paid-in capital (Cr. Common Stock/APIC = +SE). No liability or revenue is affected." },
-  { id: "ac2_21", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q29",
-    prompt: "Providing services and receiving cash concurrently will:",
-    choices: ["increase assets and increase shareholders' equity.", "increase assets and increase liabilities.", "decrease assets and increase liabilities.", "decrease liabilities and increase shareholders' equity."],
-    answer: 0, solution: "Dr. Cash (+asset), Cr. Service Revenue (+SE via retained earnings). Assets increase (cash) and shareholders' equity increases (revenue recognized). No liability is involved." },
-  { id: "ac2_22", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q30",
-    prompt: "Borrowing cash from the bank would have what effect on the accounting equation?",
-    choices: ["Assets increase and shareholders' equity increases.", "Assets increase and liabilities increase.", "Liabilities increase and shareholders' equity decreases.", "Liabilities decrease and shareholders' equity increases."],
-    answer: 1, solution: "Dr. Cash (+asset), Cr. Notes Payable (+liability). Borrowing increases assets (cash received) and liabilities (obligation to repay) by equal amounts. Shareholders' equity is unaffected." },
-  { id: "ac2_23", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q31",
-    prompt: "Paying for supplies previously purchased would have what effect on the accounting equation?",
-    choices: ["Assets decrease and shareholders' equity decreases.", "Assets increase and liabilities increase.", "Liabilities decrease and shareholders' equity increases.", "Assets decrease and liabilities decrease."],
-    answer: 3, solution: "If supplies were bought on account previously (Dr. Supplies, Cr. A/P), paying now is: Dr. Accounts Payable (−liability), Cr. Cash (−asset). Assets and liabilities both decrease; equity is unchanged." },
-  { id: "ac2_24", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q32",
-    prompt: "Purchasing office equipment on account has what impact on the accounting equation?",
-    choices: ["Shareholders' equity decreases and assets increase.", "Liabilities increase and assets increase.", "Assets decrease and liabilities decrease.", "Assets increase and shareholders' equity increases."],
-    answer: 1, solution: "Dr. Equipment (+asset), Cr. Accounts Payable (+liability). Both assets and liabilities increase by the same amount; shareholders' equity is not affected." },
-  { id: "ac2_25", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 MC Q33",
-    prompt: "Following are transactions of a new company during January: Issued 11,900 shares of common stock for $23,800 cash. Purchased land for $13,900 by signing a note payable for the full amount. Purchased office equipment for $3,100 cash. Received cash of $15,900 for services provided to customers. Purchased $400 of office supplies on account. Paid employees $11,900 for work during the period. What is the total amount of liabilities following these six transactions?",
-    choices: ["$26,600.", "$19,400.", "$38,100.", "$14,300."],
-    answer: 3, solution: "Liabilities arise from two transactions: note payable for land = $13,900 and accounts payable for supplies = $400. Total = $13,900 + $400 = $14,300. The stock issuance, cash purchases, revenue, and salary payment do not create liabilities." },
-  { id: "ac2_26", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 MC Q34",
-    prompt: "Following are transactions of a new company during January: Issued 10,000 shares of common stock for $15,000 cash. Purchased land for $12,000 by signing a note payable for the full amount. Purchased office equipment for $1,200 cash. Received cash of $14,000 for services provided to customers. Purchased $300 of office supplies on account. Paid employees $10,000 for work during the period. What is the total amount of liabilities following these six transactions?",
-    choices: ["$12,300.", "$27,300.", "$22,600.", "$15,500."],
-    answer: 0, solution: "Note payable for land = $12,000; accounts payable for supplies = $300. Total liabilities = $12,000 + $300 = $12,300. All other transactions affect cash and equity without creating liabilities." },
-  { id: "ac2_27", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q35",
-    prompt: "How many of the following transactions would increase total assets in the current period? (1) Collect cash from customer prior to providing service. (2) Provide services to customer and receive cash at time of service. (3) Provide services on account to customer. (4) Collect cash from customer for services provided previously on account.",
-    choices: ["One.", "Two.", "Three.", "Four."],
-    answer: 2, solution: "Transactions 1–3 all increase total assets: (1) Cash+, Unearned Revenue+; (2) Cash+, Revenue+; (3) A/R+, Revenue+. Transaction (4) swaps A/R for Cash—assets reclassify, no net increase." },
-  { id: "ac2_28", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q36",
-    prompt: "How many of the following transactions would increase total shareholders' equity in the current period? (1) Declare and pay dividends to shareholders on the same date. (2) Delay payment on supplies purchased until the following period. (3) Provide services on account to customers. (4) Borrow cash from a local bank.",
-    choices: ["One.", "Two.", "Three.", "Four."],
-    answer: 0, solution: "Only (3) increases SE by recognizing service revenue → Retained Earnings. (1) Dividends decrease SE. (2) Supplies on account: assets+, liabilities+, no SE effect. (4) Borrow cash: assets+, liabilities+, no SE effect." },
-  { id: "ac2_29", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q37",
-    prompt: "How many of the following transactions would decrease total shareholders' equity in the current period? (1) Declare and pay dividends to shareholders on the same date. (2) Delay payment on supplies purchased until the following period. (3) Provide services on account to customers. (4) Borrow cash from a local bank.",
-    choices: ["One.", "Two.", "Three.", "Four."],
-    answer: 0, solution: "Only (1) decreases SE—paying dividends reduces Retained Earnings. (2) No SE effect. (3) Increases SE via revenue. (4) Assets and liabilities both increase, no SE effect." },
-  { id: "ac2_30", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 MC Q38",
-    prompt: "If the liabilities of a company increased by $77,000 during a month and the shareholders' equity decreased by $41,000 during that same month, did assets increase or decrease and by how much?",
-    choices: ["$36,000 increase.", "$77,000 increase.", "$118,000 increase.", "$36,000 decrease."],
-    answer: 0, solution: "From A = L + SE: ΔAssets = ΔLiabilities + ΔSE = +$77,000 + (−$41,000) = +$36,000 increase." },
-  { id: "ac2_31", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 MC Q39",
-    prompt: "If the liabilities of a company increased by $55,000 during a month and the shareholders' equity decreased by $21,000 during that same month, did assets increase or decrease and by how much?",
-    choices: ["$34,000 increase.", "$55,000 increase.", "$34,000 decrease.", "$76,000 increase."],
-    answer: 0, solution: "ΔAssets = ΔLiabilities + ΔSE = +$55,000 + (−$21,000) = +$34,000 increase." },
-  { id: "ac2_32", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q40",
-    prompt: "Examples of external transactions include all of the following except:",
-    choices: ["Paying employee salaries.", "Purchasing equipment.", "Depreciating equipment.", "Collecting a receivable."],
-    answer: 2, solution: "Depreciating equipment is an INTERNAL event—no exchange with an outside party. It is recorded via an adjusting entry. Paying salaries, purchasing equipment, and collecting receivables all involve external parties." },
-  { id: "ac2_33", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q41",
-    prompt: "Which of the following is true about a 'debit'? I. It is part of the double-entry system. II. It represents an increase to asset account balances. III. It represents a decrease to liability account balances. IV. It is on the right side of an account.",
-    choices: ["I and II.", "IV only.", "I, II, and III.", "I, II, III, and IV."],
-    answer: 2, solution: "Statements I, II, and III are all true. Statement IV is FALSE—debits are on the LEFT side of a T-account. Credits are on the right side." },
-  { id: "ac2_34", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q42",
-    prompt: "Which of the following is true about a 'credit'? I. It is part of the double-entry system. II. It represents a decrease to asset account balances. III. It represents an increase to liability account balances. IV. It is on the right side of an account.",
-    choices: ["I and II.", "IV only.", "I, II, and III.", "I, II, III, and IV."],
-    answer: 3, solution: "All four statements are TRUE. Credits are on the RIGHT side of a T-account (IV), decrease assets (II), increase liabilities (III), and are part of the double-entry system (I)." },
-  { id: "ac2_35", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q43",
+  { id: "ac2_11", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q43",
     prompt: "An asset account increases with a _____________; a liability account increases with a _____________.",
     choices: ["debit; debit.", "credit; debit.", "debit; credit.", "credit; credit."],
     answer: 2, solution: "Assets are on the left side of the equation and increase with debits. Liabilities are on the right side and increase with credits. Normal debit balances: assets, expenses, dividends. Normal credit balances: liabilities, equity, revenues." },
-  { id: "ac2_36", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q44",
-    prompt: "An expense account increases with a _____________; a revenue account increases with a _____________.",
-    choices: ["debit; debit.", "debit; credit.", "credit; debit.", "credit; credit."],
-    answer: 1, solution: "Expense accounts (which reduce equity) increase with debits—same side as assets. Revenue accounts (which increase equity) increase with credits—same side as liabilities and equity." },
-  { id: "ac2_37", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q45",
-    prompt: "An asset account increases with a _____________ and decreases with a _____________.",
-    choices: ["debit; debit.", "credit; debit.", "debit; credit.", "credit; credit."],
-    answer: 2, solution: "Asset accounts have normal debit balances: they INCREASE with debits and DECREASE with credits. This is opposite to liability and equity accounts, which have normal credit balances." },
-  { id: "ac2_38", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q46",
-    prompt: "The accounting processing cycle is best described as:",
-    choices: ["A three-wheeled vehicle used to deliver audit papers to clients.", "A process that deals only with internal transactions.", "The process of bringing the company's financial information up to date before preparing the financial statements.", "The process used to identify, analyze, record, and summarize transactions and prepare financial statements."],
-    answer: 3, solution: "The accounting processing cycle covers all steps from identifying transactions through preparing financial statements and closing: analyze → journalize → post → trial balance → adjust → adjusted trial balance → financial statements → close." },
-  { id: "ac2_39", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q47",
-    prompt: "External transactions include all of the following except:",
-    choices: ["paying rent.", "purchasing equipment.", "using office supplies.", "collecting an account receivable."],
-    answer: 2, solution: "Using (consuming) office supplies is an INTERNAL event recorded via an adjusting entry—no outside party is involved. Paying rent (landlord), purchasing equipment (supplier), and collecting receivables (customer) all involve external parties." },
-  { id: "ac2_40", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q48",
-    prompt: "Which step in the process of measuring external transactions involves assessing the equality of total debits and total credits for the period?",
-    choices: ["Obtain information from source documents.", "Prepare an unadjusted trial balance.", "Analyze the transaction.", "Post from the journal to the general ledger accounts."],
-    answer: 1, solution: "The unadjusted trial balance lists all accounts and balances to verify total debits = total credits. It is prepared after all external transactions are journalized and posted, but before adjusting entries." },
-  { id: "ac2_41", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q49",
-    prompt: "Which step in the process of measuring external transactions involves determining the effect on assets, liabilities, and shareholders' equity?",
-    choices: ["Obtain information about external transactions from source documents.", "Prepare an unadjusted trial balance.", "Analyze the transaction.", "Post from journal to the general ledger accounts."],
-    answer: 2, solution: "Analyzing the transaction means determining which accounts are affected, whether each is debited or credited, and by how much—assessing the impact on A, L, and SE before recording the journal entry." },
-  { id: "ac2_42", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q50",
-    prompt: "Which of the following is a source document for gathering information about a transaction?",
-    choices: ["Trial balance.", "Income statement.", "Sales invoice.", "General ledger."],
-    answer: 2, solution: "A sales invoice is generated when goods or services are sold and serves as a source document. Trial balances, financial statements, and the general ledger are accounting records derived from source documents, not source documents themselves." },
-  { id: "ac2_43", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 MC Q51",
-    prompt: "Which of the following best describes a purpose of source documents?",
-    choices: ["Provide information related to external transactions, such as date and amount.", "Used by accountants to record transactions in specific accounts.", "Keep a record of transactions between the company and its vendors, customers, and other parties.", "All of the other answers provide a correct statement."],
-    answer: 3, solution: "All three descriptions are accurate purposes of source documents: they provide transaction details, guide accountants in recording entries, and serve as the evidentiary record for transactions with external parties." },
+  { id: "ac2_12", chapter: "Chapter 2", type: "theory", source: "Spiceland Ed.11 – Ch.2",
+    prompt: "In which order should the following financial statements be prepared?",
+    choices: ["Balance sheet → Income statement → Statement of shareholders' equity.", "Balance sheet → Statement of shareholders' equity → Income statement.", "Income statement → Statement of shareholders' equity → Balance sheet.", "Statement of cash flows → Income statement → Balance sheet."],
+    answer: 2, solution: "The income statement must be prepared first because net income flows into the statement of shareholders' equity (updating retained earnings). The statement of shareholders' equity is prepared second because ending retained earnings is needed for the balance sheet. The balance sheet is prepared last." },
+  { id: "ac2_13", chapter: "Chapter 2", type: "computational", source: "Spiceland Ed.11 MC Q33",
+    prompt: "Following are transactions of a new company during January: Issued 11,900 shares of common stock for $23,800 cash. Purchased land for $13,900 by signing a note payable for the full amount. Purchased office equipment for $3,100 cash. Received cash of $15,900 for services provided to customers. Purchased $400 of office supplies on account. Paid employees $11,900 for work during the period. What is the total amount of liabilities following these six transactions?",
+    choices: ["$26,600.", "$19,400.", "$38,100.", "$14,300."],
+    answer: 3, solution: "Liabilities arise from two transactions: note payable for land = $13,900 and accounts payable for supplies = $400. Total = $13,900 + $400 = $14,300. The stock issuance, cash purchases, revenue, and salary payment do not create liabilities." },
+  { id: "ac2_14", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q14",
+    prompt: "The post-closing trial balance contains only permanent accounts.",
+    choices: ["True.", "False."],
+    answer: 0, solution: "True. After closing entries zero out all temporary accounts (revenues, expenses, dividends), only the permanent accounts (assets, liabilities, retained earnings, and other equity) remain with balances, forming the post-closing trial balance." },
+  { id: "ac2_15", chapter: "Chapter 2", type: "tf", source: "Spiceland Ed.11 T/F Q15",
+    prompt: "The closing process brings all temporary accounts to a zero balance and updates the balance in the retained earnings account.",
+    choices: ["True.", "False."],
+    answer: 0, solution: "True. Closing entries transfer the balances of all temporary accounts (revenues, expenses, dividends declared) to Retained Earnings, resetting them to zero so each new period begins fresh." },
 
   // ─── Chapter 3 ───────────────────────────────────────────────────────────────
-  { id: "ac3_01", chapter: "Chapter 3", type: "tf", source: "Spiceland Ed.11 T/F Q3",
+  { id: "ac3_01", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "The primary purpose of the balance sheet (statement of financial position) is to:",
+    choices: ["Summarize revenues and expenses for the accounting period.", "Report the flow of cash into and out of the company.", "Report the financial position of the company at a specific point in time.", "Show the changes in shareholders' equity during the period."],
+    answer: 2, solution: "The balance sheet reports a company's financial position—its assets, liabilities, and shareholders' equity—as of a specific date. It is a 'stock' statement, not a 'flow' statement like the income statement or statement of cash flows." },
+  { id: "ac3_02", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following is a primary limitation of the balance sheet?",
+    choices: ["It does not show all liabilities of the company.", "Many assets are reported at historical cost rather than current market value, reducing relevance.", "It includes only cash transactions.", "It is prepared only annually, not quarterly."],
+    answer: 1, solution: "A major limitation of the balance sheet is that most assets are reported at historical cost (original purchase price less accumulated depreciation), which may differ significantly from current fair market value. This can reduce the relevance of reported amounts to decision-makers." },
+  { id: "ac3_03", chapter: "Chapter 3", type: "tf", source: "Spiceland Ed.11 T/F Q3",
     prompt: "Balance sheet accounts are referred to as temporary accounts because their balances are always changing.",
     choices: ["True.", "False."],
     answer: 1, solution: "False. Balance sheet accounts (assets, liabilities, stockholders' equity) are PERMANENT accounts—their balances carry forward from period to period and are never closed. Temporary accounts are income statement accounts (revenues, expenses) and dividends, which are zeroed out each period." },
-  { id: "ac3_02", chapter: "Chapter 3", type: "tf", source: "Spiceland Ed.11 T/F Q11",
+  { id: "ac3_04", chapter: "Chapter 3", type: "tf", source: "Spiceland Ed.11 T/F Q11",
     prompt: "The balance sheet can be considered a change or flow statement.",
     choices: ["True.", "False."],
-    answer: 1, solution: "False. The balance sheet is a POINT-IN-TIME (stock) statement, not a flow statement. It reports financial position as of a specific date. The income statement and statement of cash flows are flow statements that cover a period of time." }
+    answer: 1, solution: "False. The balance sheet is a POINT-IN-TIME (stock) statement, not a flow statement. It reports financial position as of a specific date. The income statement and statement of cash flows are flow statements that cover a period of time." },
+  { id: "ac3_05", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following best defines a 'current asset'?",
+    choices: ["Any asset that produces revenue for the company.", "An asset expected to be converted to cash, sold, or used within one year or the operating cycle, whichever is longer.", "An asset that appreciates in value over time.", "An asset with a physical existence, such as equipment or land."],
+    answer: 1, solution: "Current assets are those expected to be converted to cash, sold, or used within one year or within the company's operating cycle, whichever is longer. Examples include cash, accounts receivable, inventory, and prepaid expenses." },
+  { id: "ac3_06", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "The operating cycle of a company is best described as:",
+    choices: ["The time from when a company is incorporated until it begins generating revenue.", "The average time between purchasing inventory and collecting cash from the sale of that inventory.", "The period covered by the most recent income statement.", "The length of a company's fiscal year."],
+    answer: 1, solution: "The operating cycle is the average time it takes to convert cash into inventory, sell the inventory, and then collect the resulting receivable—returning to cash. For most companies, this is less than one year, making one year the practical rule for classifying current items." },
+  { id: "ac3_07", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following would most likely be classified as a 'cash equivalent'?",
+    choices: ["A long-term certificate of deposit maturing in 5 years.", "A common stock investment held for potential appreciation.", "A 90-day U.S. Treasury bill purchased 2 months ago.", "A 6-month certificate of deposit."],
+    answer: 2, solution: "Cash equivalents are highly liquid, short-term investments with original maturities of three months or less. A 90-day Treasury bill meets this criterion. Long-term CDs, stock investments, and 6-month CDs do not qualify." },
+  { id: "ac3_08", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following would be classified as property, plant, and equipment (PP&E) on the balance sheet?",
+    choices: ["Accounts receivable.", "Long-term debt investments.", "Office building.", "Inventory."],
+    answer: 2, solution: "PP&E includes tangible, long-term assets used in operations: land, buildings, machinery, and equipment. Accounts receivable and inventory are current assets; long-term investments are a separate non-current category." },
+  { id: "ac3_09", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following is correctly classified as an intangible asset on the balance sheet?",
+    choices: ["Prepaid rent.", "Long-term investments in securities.", "Patent rights.", "Accrued revenue."],
+    answer: 2, solution: "Intangible assets lack physical substance but provide future economic benefits. Patents grant exclusive production rights and are a classic intangible asset. Prepaid rent is a current asset; long-term investments are a separate non-current category; accrued revenue is a current asset." },
+  { id: "ac3_10", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Which of the following would be classified as a current liability?",
+    choices: ["A 10-year mortgage on company headquarters.", "Bonds payable due in 5 years.", "Wages payable expected to be paid within the next two weeks.", "Notes payable due in 3 years."],
+    answer: 2, solution: "Wages payable due within two weeks are obligations expected to be settled within one year, making them current liabilities. The mortgage, bonds, and notes payable all mature beyond one year and are long-term liabilities." },
+  { id: "ac3_11", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "The stockholders' equity section of the balance sheet primarily consists of:",
+    choices: ["Assets minus liabilities.", "Contributed capital and retained earnings.", "Common stock and long-term debt.", "Current liabilities and long-term liabilities."],
+    answer: 1, solution: "Stockholders' equity has two main components: (1) contributed capital—amounts invested by shareholders (common stock, additional paid-in capital), and (2) retained earnings—cumulative net income not distributed as dividends. Long-term debt is a liability, not equity." },
+  { id: "ac3_12", chapter: "Chapter 3", type: "computational", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "A company's balance sheet shows the following account balances: Cash $4,000; Accounts Receivable $9,000; Inventory $15,000; Prepaid Insurance $2,000; Equipment $40,000; Patent $10,000. What is the total of current assets?",
+    choices: ["$40,000.", "$30,000.", "$80,000.", "$54,000."],
+    answer: 1, solution: "Current assets = Cash + Accounts Receivable + Inventory + Prepaid Insurance = $4,000 + $9,000 + $15,000 + $2,000 = $30,000. Equipment (PP&E) and Patent (intangible asset) are non-current assets." },
+  { id: "ac3_13", chapter: "Chapter 3", type: "computational", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "A company's balance sheet includes: Accounts Payable $6,000; Wages Payable $2,000; Notes Payable due in 6 months $4,000; Bonds Payable due in 10 years $50,000; Mortgage Payable due in 15 years $80,000. What is the total of current liabilities?",
+    choices: ["$142,000.", "$12,000.", "$130,000.", "$6,000."],
+    answer: 1, solution: "Current liabilities are due within one year: Accounts Payable $6,000 + Wages Payable $2,000 + Notes Payable (6 months) $4,000 = $12,000. Bonds Payable (10 years) and Mortgage Payable (15 years) are long-term liabilities." },
+  { id: "ac3_14", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "The summary of significant accounting policies note is required because:",
+    choices: ["The SEC requires it for all public companies only.", "The policies chosen by management can significantly affect reported financial results, and users need this context to understand and compare statements.", "Accounting policies are always identical across all companies.", "Financial statements cannot be audited without first disclosing policies."],
+    answer: 1, solution: "Because GAAP permits choices among acceptable accounting methods (e.g., LIFO vs. FIFO, straight-line vs. accelerated depreciation), disclosing the policies management has adopted is essential. Users need this information to understand reported numbers and meaningfully compare one company's statements to another's." },
+  { id: "ac3_15", chapter: "Chapter 3", type: "theory", source: "Spiceland Ed.11 – Ch.3",
+    prompt: "Disclosure notes are considered an integral part of financial statements because they:",
+    choices: ["Replace the need for auditing the primary financial statements.", "Provide context and detail that cannot be fully communicated through the financial statement numbers alone.", "Are required only when a company reports a net loss.", "Are prepared by the external auditor rather than management."],
+    answer: 1, solution: "Disclosure notes supplement the financial statement numbers with information that cannot be captured in dollar amounts alone—accounting policies, risk exposures, contingent liabilities, lease terms, related-party transactions, and subsequent events. Notes enable informed users to fully evaluate a company's financial position and performance." }
 ];
 
 const state = {
@@ -1071,7 +1055,7 @@ function generateTest() {
 
 function getQuestionsForKind(kind) {
   if (kind === "generated") return state.generated;
-  if (kind === "ac300") return ac300Questions.filter(q => q.chapter === "Chapter " + state.ac300.chapter);
+  if (kind === "ac300") return ac300Questions;
   if (state.sampleFilter) return sampleQuestions.filter(q => q.source.includes(state.sampleFilter));
   return sampleQuestions;
 }
@@ -1496,10 +1480,8 @@ function goToReviewQuestion(id) {
   }
   const ac300Q = ac300Questions.find(q => q.id === id);
   if (ac300Q) {
-    const chapter = ac300Q.chapter.replace("Chapter ", "");
-    state.ac300.chapter = chapter;
-    const chapterQs = ac300Questions.filter(q => q.chapter === ac300Q.chapter);
-    state.ac300.run.index = chapterQs.findIndex(q => q.id === id);
+    state.ac300.chapter = "all";
+    state.ac300.run.index = ac300Questions.findIndex(q => q.id === id);
     routeTo("ac300-review");
   }
 }
@@ -1875,8 +1857,8 @@ function revealContact(key) {
   if (key === "email") window.open(item.href, "_blank", "noopener,noreferrer");
 }
 
-function startAC300Quiz(chapter) {
-  state.ac300.chapter = String(chapter);
+function startAC300Quiz() {
+  state.ac300.chapter = "all";
   state.ac300.run = { index: 0, attempts: {}, solved: {}, wrong: {}, first: {} };
   saveState();
   render();
@@ -1891,7 +1873,7 @@ function backToAC300() {
 function renderAC300Quiz() {
   const questions = getQuestionsForKind("ac300");
   if (!questions || !questions.length) {
-    return `<section class="panel stack"><p class="muted">No questions found for this chapter.</p><button type="button" class="secondary" onclick="backToAC300()">Back to Chapters</button></section>`;
+    return `<section class="panel stack"><p class="muted">No questions found.</p><button type="button" class="secondary" onclick="backToAC300()">Overview</button></section>`;
   }
   const run = state.ac300.run;
   const q = questions[run.index];
@@ -1912,7 +1894,7 @@ function renderAC300Quiz() {
   return `
     <section class="stack">
       <div class="question-meta">
-        <span class="badge">AC 300 ${q.chapter} · Question ${run.index + 1} of ${questions.length}</span>
+        <span class="badge">AC 300 · ${q.chapter} · Question ${run.index + 1} of ${questions.length}</span>
         <span>Score ${correctCount}/${questions.length} · Attempts on this question ${attempts}</span>
       </div>
       ${accuracyRow}
@@ -1939,40 +1921,28 @@ function renderAC300Quiz() {
         <button type="button" class="secondary" onclick="moveQuestion('ac300', -1)">Back</button>
         <button type="button" class="primary" onclick="moveQuestion('ac300', 1)">Next</button>
         <button type="button" class="secondary" onclick="resetQuiz('ac300')">Reset test</button>
-        <button type="button" class="secondary" onclick="backToAC300()">All chapters</button>
+        <button type="button" class="secondary" onclick="backToAC300()">Overview</button>
       </div>
     </section>`;
 }
 
 function renderAC300Review() {
   if (state.ac300.chapter !== null) return renderAC300Quiz();
-  const chapterMeta = [
-    { num: "1", topics: "Purpose of accounting, GAAP, conceptual framework, financial statements, elements, auditor, disclosure notes." },
-    { num: "2", topics: "Accounting equation, debits/credits, journal entries, accrual basis, adjusting entries, trial balance, closing entries." },
-    { num: "3", topics: "Balance sheet purpose, benefits/limitations, asset and liability classification, operating cycle, cash equivalents, disclosure notes." }
-  ];
-  const cards = chapterMeta.map(ch => {
-    const count = ac300Questions.filter(q => q.chapter === "Chapter " + ch.num).length;
-    return `
-      <div class="panel">
-        <p class="eyebrow">AC 300 · Chapter ${ch.num}</p>
-        <h3>Chapter ${ch.num}</h3>
-        <p class="muted" style="font-size:0.85rem">${ch.topics}</p>
-        <div class="action-row" style="margin-top:1.25rem;align-items:center">
-          <button type="button" class="primary" onclick="startAC300Quiz('${ch.num}')">Start Test (${count} questions)</button>
-        </div>
-      </div>`;
-  }).join("");
+  const total = ac300Questions.length;
+  const perCh = [1, 2, 3].map(n => ac300Questions.filter(q => q.chapter === `Chapter ${n}`).length);
   return `
     <section class="hero" style="grid-template-columns:1fr">
       <div class="panel">
         <p class="eyebrow">Intermediate Accounting I</p>
-        <h2>AC 300 — Review Tests</h2>
-        <p class="muted">Select a chapter to start a practice test. Each question shows a worked explanation after the correct answer is chosen. Progress is saved automatically.</p>
+        <h2>AC 300 — Exam I Review</h2>
+        <p class="muted">A comprehensive ${total}-question review covering Chapters 1–3. Each question reveals a worked explanation after the correct answer is chosen. Progress is saved automatically.</p>
+        <div style="margin:1.25rem 0;display:flex;gap:0.75rem;flex-wrap:wrap">
+          ${perCh.map((count, i) => `<span class="badge">Chapter ${i + 1}: ${count} questions</span>`).join("")}
+        </div>
+        <div class="action-row" style="margin-top:1.25rem">
+          <button type="button" class="primary" onclick="startAC300Quiz()">Start Review</button>
+        </div>
       </div>
-    </section>
-    <section class="grid" style="margin-top:1rem">
-      ${cards}
     </section>`;
 }
 
