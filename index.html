@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Interactive FIN 295 final exam study tool: sample test, generated practice, formula sheet, BA II Plus TVM calculator, and Pomodoro timer." />
-    <title>FIN 295 Final Study Studio</title>
+    <meta name="description" content="Interactive study tool for FIN 295 and AC 300: sample tests, generated practice tests, formula sheets, BA II Plus TVM calculator, and Pomodoro timer." />
+    <title>Study Studio — FIN 295 &amp; AC 300</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
@@ -42,10 +42,13 @@
         <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
       </div>
       <nav id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation" hidden>
+        <div class="mobile-nav-section">FIN 295</div>
         <button type="button" data-route="sample" class="mobile-nav-link">Sample Test</button>
         <button type="button" data-route="generate" class="mobile-nav-link">Practice Tests</button>
         <button type="button" data-route="formulas" class="mobile-nav-link">Formula Sheet</button>
         <button type="button" data-route="tools" class="mobile-nav-link">Study Tools</button>
+        <div class="mobile-nav-section">AC 300</div>
+        <button type="button" data-route="ac300-review" class="mobile-nav-link">Review Tests</button>
         <button id="mobileThemeToggle" type="button" class="mobile-menu-action"><span data-theme-icon></span><span data-theme-label></span></button>
         <a class="mobile-menu-action" href="https://www.linkedin.com/in/minsot13" target="_blank" rel="noopener noreferrer">Get in Touch</a>
       </nav>
@@ -54,10 +57,13 @@
       <nav class="sidebar" aria-label="Main navigation">
         <button type="button" data-route="home" class="nav-link nav-home-link active" aria-current="page"><span aria-hidden="true">&#8962;</span><span class="nav-text">Home</span></button>
         <div id="mainNavLinks" class="nav-links">
+          <div class="nav-section-label">FIN 295</div>
           <button type="button" data-route="sample" class="nav-link">Sample Test</button>
           <button type="button" data-route="generate" class="nav-link">Practice Test</button>
           <button type="button" data-route="formulas" class="nav-link">Formula Sheet</button>
           <button type="button" data-route="tools" class="nav-link">Study Tools</button>
+          <div class="nav-section-label">AC 300</div>
+          <button type="button" data-route="ac300-review" class="nav-link">Review Tests</button>
         </div>
       </nav>
       <main id="app" tabindex="-1"></main>
